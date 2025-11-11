@@ -27,6 +27,10 @@ app.get('/', (req, res) => {
 
 // import and use routes
 app.use('/api/auth', require('./routes/auth'));
+app.use('/api/classrooms', require('./routes/classroom'));
+app.use('/api/assignments', require('./routes/assignment'));
+app.use('/api/submissions', require('./routes/submission'));
+
 
 //error handling middleware
 app.use((err, req, res, next) => {
