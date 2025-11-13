@@ -30,6 +30,7 @@ app.use('/api/auth', require('./routes/auth'));
 app.use('/api/classrooms', require('./routes/classroom'));
 app.use('/api/assignments', require('./routes/assignment'));
 app.use('/api/submissions', require('./routes/submission'));
+app.use('/api/upload', require('./routes/upload'));
 
 
 //error handling middleware
