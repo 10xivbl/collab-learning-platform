@@ -1,0 +1,14 @@
+#local database
+MONGO_URI=mongodb://localhost:27017/collaborative_learning_db
+
+#own secret
+JWT_SECRET=secretkey123
+
+#own Cloudinary account
+CLOUDINARY_CLOUD_NAME=dboujj5v5
+CLOUDINARY_API_KEY=171794953717928
+CLOUDINARY_API_SECRET=pOKId4G_eCItWZ6nvO9hAYWyhMo
+
+#local server
+PORT=3000
+NODE_ENV=development
