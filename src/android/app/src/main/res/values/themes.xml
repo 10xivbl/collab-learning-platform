@@ -1,0 +1,12 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Change from DarkActionBar to NoActionBar -->
+    <style name="Theme.CollabLearn" parent="Theme.MaterialComponents.Light.NoActionBar">
+        <item name="colorPrimary">#667eea</item>
+        <item name="colorPrimaryVariant">#5568d3</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="colorSecondary">#764ba2</item>
+        <item name="colorSecondaryVariant">#5e3a82</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
+    </style>
+</resources>
