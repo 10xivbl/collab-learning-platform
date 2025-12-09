@@ -6,10 +6,7 @@ plugins {
 
 android {
     namespace = "com.collablearn"
-    compileSdk {
-        version = release(36)
-    }
-
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.collablearn"
         minSdk = 24
