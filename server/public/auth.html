@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collab Learning · Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/global.css">
+  <link rel="stylesheet" href="./assets/css/components.css">
+  <link rel="stylesheet" href="./assets/css/auth.css">
+</head>
+<body>
+  <div class="page">
+    <div class="auth-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="logo">CL</div>
+          <div>
+            <p class="eyebrow">Collab Learning</p>
+            <p class="muted">Sign in to continue</p>
+          </div>
+        </div>
+      </header>
+
+      <div class="card auth">
+        <div class="tabs">
+          <button class="tab active" data-tab="login">Log in</button>
+          <button class="tab" data-tab="signup">Sign up</button>
+        </div>
+        <div id="message" class="alert" hidden></div>
+
+        <form id="login" class="form active" novalidate>
+          <label>Email
+            <input type="email" name="email" placeholder="you@school.edu" required>
+          </label>
+          <label>Password
+            <input type="password" name="password" placeholder="••••••••" required>
+          </label>
+          <button type="submit" class="primary full">Continue</button>
+        </form>
+
+        <form id="signup" class="form" novalidate>
+          <label>Full name
+            <input type="text" name="name" placeholder="..." required>
+          </label>
+          <label>Username
+            <input type="text" name="username" placeholder="..." required>
+          </label>
+          <label>School email
+            <input type="email" name="email" placeholder="example@mail.com" required>
+          </label>
+          <label>Password
+            <input type="password" name="password" placeholder="Create a password" required>
+          </label>
+          <label>Role
+            <select name="role">
+              <option value="student">Student</option>
+              <option value="teacher">Teacher</option>
+            </select>
+          </label>
+          <button type="submit" class="primary full">Create account</button>
+          <p class="muted center small">After signup, log in to continue.</p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = '/api/auth';
+    const tabs = document.querySelectorAll('.tab');
+    const forms = document.querySelectorAll('.form');
+    const message = document.getElementById('message');
+    const loginForm = document.getElementById('login');
+    const signupForm = document.getElementById('signup');
+    const loginButton = loginForm.querySelector('button[type="submit"]');
+    const signupButton = signupForm.querySelector('button[type="submit"]');
+
+    const setActiveTab = (tabName) => {
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+      forms.forEach(f => f.classList.toggle('active', f.id === tabName));
+      message.hidden = true;
+    };
+
+    const showMessage = (text, type = 'info') => {
+      message.textContent = text;
+      message.className = `alert ${type}`;
+      message.hidden = false;
+    };
+
+    const clearMessage = () => {
+      message.hidden = true;
+      message.textContent = '';
+      message.className = 'alert';
+    };
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => setActiveTab(tab.dataset.tab));
+      tab.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          setActiveTab(tab.dataset.tab);
+        }
+      });
+    });
+
+    const splitName = (fullName) => {
+      const [firstName, ...rest] = fullName.trim().split(' ').filter(Boolean);
+      return {
+        firstName: firstName || '',
+        lastName: rest.join(' ') || (firstName || '')
+      };
+    };
+
+    const storeSession = (data) => {
+      if (data?.token) {
+        localStorage.setItem('token', data.token);
+      }
+      if (data?.user) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        localStorage.setItem('clp_user_role', data.user.role);
+        localStorage.setItem('clp_user_name', `${data.user.firstName} ${data.user.lastName}`);
+        localStorage.setItem('clp_user_id', data.user._id);
+        localStorage.setItem('clp_user_email', data.user.email);
+      }
+    };
+
+    const handleLogin = async (event) => {
+      event.preventDefault();
+      clearMessage();
+      const email = loginForm.email.value.trim();
+      const password = loginForm.password.value.trim();
+
+      if (!email || !password) {
+        return showMessage('Email and password are required.', 'error');
+      }
+
+      loginButton.disabled = true;
+      loginButton.textContent = 'Signing in...';
+
+      try {
+        const res = await fetch(`${API_BASE}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        console.log('Login response:', data);
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to log in.');
+        }
+        storeSession(data);
+        console.log('Session stored. Token:', localStorage.getItem('token'));
+        console.log('User role:', localStorage.getItem('clp_user_role'));
+        showMessage('Login successful. Redirecting...', 'success');
+        setTimeout(() => (window.location.href = '/app'), 400);
+      } catch (error) {
+        showMessage(error.message, 'error');
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = 'Continue';
+      }
+    };
+
+    const handleSignup = async (event) => {
+      event.preventDefault();
+      clearMessage();
+
+      const name = signupForm.name.value;
+      const email = signupForm.email.value.trim();
+      const password = signupForm.password.value.trim();
+      const username = signupForm.username.value.trim() || email.split('@')[0];
+      const role = (signupForm.role.value || 'student').toLowerCase();
+      const { firstName, lastName } = splitName(name);
+
+      if (!firstName || !lastName || !email || !password || !username) {
+        return showMessage('Please fill out all fields.', 'error');
+      }
+
+      signupButton.disabled = true;
+      signupButton.textContent = 'Creating account...';
+
+      try {
+        const res = await fetch(`${API_BASE}/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username,
+            email,
+            password,
+            role,
+            firstName,
+            lastName
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message || 'Unable to create account.');
+        }
+        showMessage('Account created. Please log in now.', 'success');
+        signupForm.reset();
+        setActiveTab('login');
+      } catch (error) {
+        showMessage(error.message, 'error');
+      } finally {
+        signupButton.disabled = false;
+        signupButton.textContent = 'Create account';
+      }
+    };
+
+    loginForm.addEventListener('submit', handleLogin);
+    signupForm.addEventListener('submit', handleSignup);
+
+    const validateSession = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await fetch(`${API_BASE}/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.ok) {
+          window.location.href = '/app';
+        } else {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      } catch (err) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    };
+
+    validateSession();
+  </script>
+</body>
+</html>

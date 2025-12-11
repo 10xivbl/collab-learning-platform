@@ -1,0 +1,89 @@
+/* Auth Page Layout */
+.page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px 16px;
+}
+
+.auth-shell {
+  width: min(420px, 92vw);
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0 18px;
+}
+
+.brand {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--primary), #0b63ff);
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+}
+
+.card.auth {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px;
+  box-shadow: var(--shadow);
+}
+
+/* Tab Styles */
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  background: #f4f6fb;
+  border-radius: 12px;
+  padding: 6px;
+  margin-bottom: 12px;
+}
+
+.tab {
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  padding: 12px 10px;
+  font-weight: 700;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.tab.active {
+  background: #fff;
+  color: var(--text);
+  box-shadow: 0 6px 14px rgba(17, 24, 39, 0.08);
+}
+
+/* Form Styles */
+form {
+  display: none;
+  flex-direction: column;
+  gap: 12px;
+}
+
+form.active { 
+  display: flex; 
+}
+
+@media (max-width: 480px) {
+  .card.auth { 
+    padding: 16px; 
+  }
+}

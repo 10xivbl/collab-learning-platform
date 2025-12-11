@@ -1,154 +1,420 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Collaborative learning website • Home</title>
-    <style>
-      :root {
-        --bg: #ffffff;
-        --text: #000000;
-        --muted: #000000;
-        --border: #000000;
-      }
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Collab Learning · Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./assets/css/global.css">
+  <link rel="stylesheet" href="./assets/css/components.css">
+  <link rel="stylesheet" href="./assets/css/dashboard.css">
+  <style>
+    /* Role-based visibility */
+    [data-role="teacher"].hidden,
+    [data-role="student"].hidden {
+      display: none !important;
+    }
+    
+    /* Profile badge */
+    .role-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-left: 8px;
+    }
+    
+    .role-badge.teacher {
+      background: #e3f2fd;
+      color: #1976d2;
+      border: 1px solid #1976d2;
+    }
+    
+    .role-badge.student {
+      background: #f3e5f5;
+      color: #7b1fa2;
+      border: 1px solid #7b1fa2;
+    }
 
-      html, body { height: 100%; }
-      body {
-        margin: 0;
-        background: var(--bg);
-        color: var(--text);
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-        line-height: 1.5;
-      }
+    /* Notification */
+    .notification {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 16px 24px;
+      border-radius: 8px;
+      background: white;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      transform: translateX(400px);
+      transition: transform 0.3s ease;
+      z-index: 1000;
+      max-width: 400px;
+    }
 
-      .container {
-        max-width: 1100px;
-        margin: 0 auto;
-        padding: 32px 20px 60px;
-      }
+    .notification.show {
+      transform: translateX(0);
+    }
 
-      header.hero {
-        text-align: center;
-        margin-bottom: 24px;
-      }
+    .notification.success {
+      border-left: 4px solid #4caf50;
+    }
 
-      .title {
-        font-size: clamp(26px, 5vw, 40px);
-        margin: 6px 0 8px;
-      }
+    .notification.error {
+      border-left: 4px solid #f44336;
+    }
 
-      .subtitle {
-        max-width: 800px;
-        margin: 0 auto;
-      }
+    .notification.info {
+      border-left: 4px solid #2196f3;
+    }
 
-      .grid {
-        display: grid;
-        grid-template-columns: repeat(12, 1fr);
-        gap: 16px;
-      }
+    /* Classroom cards */
+    .classroom-card, .assignment-card {
+      background: #f9f9f9;
+      padding: 16px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      border: 1px solid #e0e0e0;
+    }
 
-      .card {
-        grid-column: span 12;
-        border: 2px solid var(--border);
-        border-radius: 10px;
-        padding: 18px;
-        background: var(--bg);
-      }
-      @media (min-width: 720px) {
-        .card { grid-column: span 6; }
-      }
-      @media (min-width: 980px) {
-        .card { grid-column: span 6; }
-      }
+    .classroom-card h3, .assignment-card h3 {
+      margin: 0 0 8px 0;
+      font-size: 18px;
+    }
 
-      .card h3 { margin: 0 0 8px; font-size: 18px; }
-      .card p { margin: 0 0 10px; }
-      .card ul { margin: 0 0 10px 18px; padding: 0; }
-      .card li { margin: 4px 0; }
+    .classroom-meta, .assignment-meta {
+      display: flex;
+      gap: 16px;
+      margin: 12px 0;
+      font-size: 14px;
+      color: #666;
+    }
 
-      footer { text-align: center; margin-top: 38px; font-size: 14px; }
-    </style>
-  </head>
-  <body>
-    <div class="container">
-      <header class="hero">
-        <h1 class="title">Collaborative learning website</h1>
-        <p class="subtitle">
-          A general platform for educators and students to study, teach, and collaborate.
-        </p>
-        <p>
-          <a href="/client.html" style="display:inline-block;padding:10px 14px;border:2px solid #000;border-radius:10px;text-decoration:none;color:#000;font-weight:600">Open Web Client</a>
-        </p>
-      </header>
+    .classroom-actions, .assignment-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
 
-      <section class="grid" aria-label="Main features">
-        <article class="card" id="user-accounts">
-          <h3>User Accounts</h3>
-          <p>Personal accounts for teachers and students with secure access.</p>
-          <ul>
-            <li>Registration and login (teacher/student roles)</li>
-            <li>Profile management</li>
-            <li>Password reset</li>
-          </ul>
-          <!-- Controller: server/controllers/auth.js -->
-          <p>
-            <a href="/api/auth" title="Open auth controller routes (auth.js)">Use auth.js routes</a>
-          </p>
-        </article>
+    .status.published {
+      color: #4caf50;
+      font-weight: 600;
+    }
 
-        <article class="card" id="communication-collaboration">
-          <h3>Communication & Collaboration</h3>
-          <p>Keep classes engaged and connected.</p>
-          <ul>
-            <li>Discussion board for teachers and students</li>
-            <li>Commenting and replies under assignments</li>
-            <li>Private classroom/group discussions (timer and leader role)</li>
-            <li>Teacher monitoring of participation</li>
-          </ul>
-          <!-- Controller: server/controllers/classroom.js -->
-          <p>
-            <a href="/api/classrooms" title="Open classroom controller routes (classroom.js)">Use classroom.js routes</a>
-          </p>
-        </article>
+    .status.draft {
+      color: #ff9800;
+      font-weight: 600;
+    }
 
-        <article class="card" id="assignments-materials">
-          <h3>Assignments & Learning Materials</h3>
-          <p>Create, share, and assess learning content.</p>
-          <ul>
-            <li>Teachers create, assign, and grade assignments</li>
-            <li>Assignment types: Multiple Choice, Short Answer, True/False, Long Answer</li>
-            <li>Upload lecture slides and notes</li>
-            <li>Students can create personal notes</li>
-          </ul>
-          <!-- Controllers: assignment.js, submission.js, upload.js -->
-          <p>
-            <a href="/api/assignments" title="Open assignment controller routes (assignment.js)">Use assignment.js routes</a>
-            ·
-            <a href="/api/submissions" title="Open submission controller routes (submission.js)">Use submission.js routes</a>
-            ·
-            <a href="/api/upload" title="Open upload controller routes (upload.js)">Use upload.js routes</a>
-          </p>
-        </article>
+    .danger {
+      color: #f44336 !important;
+    }
 
-        <article class="card" id="task-bulletin">
-          <h3>Task Manager / Bulletin Board</h3>
-          <p>Stay on top of class updates and student tasks.</p>
-          <ul>
-            <li>Announcements, reminders, and updates</li>
-            <li>Task overview for students (pending and completed)</li>
-          </ul>
-          <!-- No controller yet as requested -->
-        </article>
+    .profile-info {
+      padding: 16px;
+    }
+
+    .profile-info h3 {
+      margin: 0 0 8px 0;
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.show {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal h2 {
+      margin: 0 0 20px 0;
+      font-size: 24px;
+    }
+
+    .modal-form {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+      padding: 10px 12px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .form-group textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #2196f3;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 20px;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-sm {
+      padding: 8px 16px;
+      font-size: 13px;
+    }
+
+    .btn-primary {
+      background: #2196f3;
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #1976d2;
+    }
+
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">CL</div>
+        <div class="brand-text">
+          <p class="eyebrow">Collab Learning</p>
+          <p class="tagline">Main app</p>
+        </div>
+      </div>
+      <div class="actions">
+        <button class="ghost" id="btnLogout">Sign out</button>
+      </div>
+    </header>
+
+    <main class="simple-grid">
+      <section class="section">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Classrooms</p>
+            <h2>Your rooms</h2>
+          </div>
+          <button class="primary small" id="btnNewClassroom" data-role="teacher">New classroom</button>
+          <button class="primary small" id="btnJoinClassroom" data-role="student">Join classroom</button>
+        </div>
+        <div id="classroomList">
+          <p class="muted">Loading classrooms...</p>
+        </div>
       </section>
 
-      <footer>
-        <div>© <span id="year"></span> Collaborative learning website</div>
-      </footer>
-    </div>
+      <section class="section">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Profile</p>
+            <h2>Your profile</h2>
+          </div>
+        </div>
+        <div class="profile-card" id="profileCard">
+          <p class="muted">Loading profile...</p>
+        </div>
+      </section>
 
-    <script>
-      document.getElementById('year').textContent = new Date().getFullYear();
-    </script>
-  </body>
-  </html>
+      <section class="section">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Assignments</p>
+            <h2>Recent assignments</h2>
+          </div>
+          <button class="ghost small" id="btnNewAssignment" data-role="teacher">New assignment</button>
+        </div>
+        <div id="assignmentList">
+          <p class="muted">Loading assignments...</p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <p>Collab Learning · Built for academic collaboration</p>
+      <div class="footer-links">
+        <a href="#status">Status</a>
+        <a href="#help">Help center</a>
+        <a href="#privacy">Privacy</a>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Create Classroom Modal -->
+  <div class="modal-overlay" id="modalCreateClassroom" style="display: none;">
+    <div class="modal">
+      <h2>Create New Classroom</h2>
+      <form class="modal-form" id="formCreateClassroom">
+        <div class="form-group">
+          <label for="classroomName">Classroom Name *</label>
+          <input type="text" id="classroomName" name="classroomName" placeholder="e.g., Mathematics 101" required>
+        </div>
+        <div class="form-group">
+          <label for="classroomSubject">Subject *</label>
+          <input type="text" id="classroomSubject" name="classroomSubject" placeholder="e.g., Mathematics" required>
+        </div>
+        <div class="form-group">
+          <label for="classroomDescription">Description *</label>
+          <textarea id="classroomDescription" name="classroomDescription" placeholder="Brief description of the classroom" required></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Classroom</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Join Classroom Modal -->
+  <div class="modal-overlay" id="modalJoinClassroom" style="display: none;">
+    <div class="modal">
+      <h2>Join Classroom</h2>
+      <form class="modal-form" id="formJoinClassroom">
+        <div class="form-group">
+          <label for="classroomCode">Classroom Code *</label>
+          <input type="text" id="classroomCode" name="classroomCode" placeholder="Enter class code" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Join</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Create Assignment Modal -->
+  <div class="modal-overlay" id="modalCreateAssignment" style="display: none;">
+    <div class="modal">
+      <h2>Create New Assignment</h2>
+      <form class="modal-form" id="formCreateAssignment">
+        <div class="form-group">
+          <label for="assignmentClassroom">Select Classroom *</label>
+          <select id="assignmentClassroom" name="assignmentClassroom" required>
+            <option value="">-- Choose a classroom --</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="assignmentTitle">Assignment Title *</label>
+          <input type="text" id="assignmentTitle" name="assignmentTitle" placeholder="e.g., Homework 1: Variables" required>
+        </div>
+        <div class="form-group">
+          <label for="assignmentDescription">Description *</label>
+          <textarea id="assignmentDescription" name="assignmentDescription" placeholder="Instructions and details" required></textarea>
+        </div>
+        <div class="form-group">
+          <label for="assignmentDueDate">Due Date *</label>
+          <input type="date" id="assignmentDueDate" name="assignmentDueDate" required>
+        </div>
+        <div class="form-group">
+          <label for="assignmentPoints">Maximum Points *</label>
+          <input type="number" id="assignmentPoints" name="assignmentPoints" placeholder="100" min="1" value="100" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create Assignment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Submit Assignment Modal -->
+  <div class="modal-overlay" id="modalSubmitAssignment" style="display: none;">
+    <div class="modal">
+      <h2>Submit Assignment</h2>
+      <form class="modal-form" id="formSubmitAssignment">
+        <input type="hidden" id="submissionAssignmentId" name="assignmentId">
+        
+        <div class="form-group">
+          <label for="submissionContent">Your Work *</label>
+          <textarea id="submissionContent" name="content" placeholder="Enter your submission text here..." required></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label for="submissionFile">Attach File (Optional)</label>
+          <input type="file" id="submissionFile" name="file" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png">
+          <small style="color: #666; margin-top: 4px;">Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG</small>
+        </div>
+        
+        <div class="form-group">
+          <label>
+            <input type="checkbox" id="submissionIsDraft" name="isDraft" style="width: auto; margin-right: 8px;">
+            Save as draft (can edit later)
+          </label>
+        </div>
+        
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary btn-cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+
+  <script type="module" src="./assets/js/app.js"></script>
+</body>
+</html>
