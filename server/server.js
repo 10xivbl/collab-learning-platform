@@ -29,8 +29,21 @@ app.get('/status', (req, res) => {
     });
 });
 
-// landing page now serves the Web Client directly
+// landing page: auth first, app after login
 app.get('/', (req, res) => {
+    console.log('Root route hit, serving auth.html');
+    const filePath = path.join(publicDir, 'auth.html');
+    console.log('File path:', filePath);
+    res.sendFile(filePath);
+});
+
+// main app shell
+app.get('/app', (req, res) => {
+    res.sendFile(path.join(publicDir, 'index.html'));
+});
+
+// Keep old client for testing/development
+app.get('/dev', (req, res) => {
     res.sendFile(path.join(publicDir, 'client.html'));
 });
 
