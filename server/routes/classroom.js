@@ -7,6 +7,8 @@ const {
   updateClassroom,
   deleteClassroom,
   joinClassroom,
+  joinClassroomById,
+  getClassroomMembers,
   leaveClassroom
 } = require('../controllers/classroom');
 const { protect, authorize } = require('../middleware/auth');
@@ -20,8 +22,14 @@ router.get('/', getClassrooms);
 // join classroom with code (students)
 router.post('/join', joinClassroom);
 
+// join classroom by id (students)
+router.post('/:id/join', joinClassroomById);
+
 // get single classroom
 router.get('/:id', getClassroom);
+
+// get classroom members
+router.get('/:id/members', getClassroomMembers);
 
 // create classroom (teachers only)
 router.post('/', authorize('teacher'), createClassroom);

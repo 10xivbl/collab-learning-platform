@@ -284,6 +284,100 @@ exports.joinClassroom = async (req, res) => {
   }
 };
 
+// @desc    Join classroom by classroom id
+// @route   POST /api/classrooms/:id/join
+// @access  Private (Student only)
+exports.joinClassroomById = async (req, res) => {
+  try {
+    const classroom = await Classroom.findById(req.params.id);
+
+    if (!classroom) {
+      return res.status(404).json({
+        success: false,
+        message: 'Classroom not found'
+      });
+    }
+
+    // prevent teacher from joining as student
+    if (classroom.teacher.toString() === req.user.id) {
+      return res.status(400).json({
+        success: false,
+        message: 'You are the teacher of this classroom'
+      });
+    }
+
+    // already enrolled?
+    if (classroom.students.includes(req.user.id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'You are already enrolled in this classroom'
+      });
+    }
+
+    classroom.students.push(req.user.id);
+    await classroom.save();
+
+    await User.findByIdAndUpdate(req.user.id, {
+      $addToSet: { classrooms: classroom._id }
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: 'Successfully joined classroom',
+      classroom
+    });
+  } catch (error) {
+    console.error('Join classroom by id error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error joining classroom',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Get classroom members (teacher and students)
+// @route   GET /api/classrooms/:id/members
+// @access  Private (Teacher or enrolled students)
+exports.getClassroomMembers = async (req, res) => {
+  try {
+    const classroom = await Classroom.findById(req.params.id)
+      .populate('teacher', 'id username email firstName lastName')
+      .populate('students', 'id username email firstName lastName');
+
+    if (!classroom) {
+      return res.status(404).json({
+        success: false,
+        message: 'Classroom not found'
+      });
+    }
+
+    const isTeacher = classroom.teacher && classroom.teacher._id.toString() === req.user.id;
+    const isStudent = classroom.students.some(s => s._id.toString() === req.user.id);
+    if (!isTeacher && !isStudent) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have access to this classroom'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      members: {
+        teacher: classroom.teacher,
+        students: classroom.students
+      }
+    });
+  } catch (error) {
+    console.error('Get classroom members error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching classroom members',
+      error: error.message
+    });
+  }
+};
+
 // @desc    Leave classroom
 // @route   POST /api/classrooms/:id/leave
 // @access  Private (Student only)

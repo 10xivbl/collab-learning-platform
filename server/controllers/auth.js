@@ -161,3 +161,22 @@ exports.getMe = async (req, res) => {
     });
   }
 };
+
+// @desc    Logout user (stateless JWT)
+// @route   POST /api/auth/logout
+// @access  Public
+// Note: With stateless JWT, logout is handled client-side by deleting the token.
+exports.logout = async (req, res) => {
+  try {
+    return res.status(200).json({
+      success: true,
+      message: 'Logged out successfully. Please remove your token from client storage.'
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error during logout',
+      error: error.message
+    });
+  }
+};

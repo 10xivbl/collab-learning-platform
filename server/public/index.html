@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Collaborative learning website • Home</title>
+    <style>
+      :root {
+        --bg: #ffffff;
+        --text: #000000;
+        --muted: #000000;
+        --border: #000000;
+      }
+
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+        line-height: 1.5;
+      }
+
+      .container {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 60px;
+      }
+
+      header.hero {
+        text-align: center;
+        margin-bottom: 24px;
+      }
+
+      .title {
+        font-size: clamp(26px, 5vw, 40px);
+        margin: 6px 0 8px;
+      }
+
+      .subtitle {
+        max-width: 800px;
+        margin: 0 auto;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 16px;
+      }
+
+      .card {
+        grid-column: span 12;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        padding: 18px;
+        background: var(--bg);
+      }
+      @media (min-width: 720px) {
+        .card { grid-column: span 6; }
+      }
+      @media (min-width: 980px) {
+        .card { grid-column: span 6; }
+      }
+
+      .card h3 { margin: 0 0 8px; font-size: 18px; }
+      .card p { margin: 0 0 10px; }
+      .card ul { margin: 0 0 10px 18px; padding: 0; }
+      .card li { margin: 4px 0; }
+
+      footer { text-align: center; margin-top: 38px; font-size: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header class="hero">
+        <h1 class="title">Collaborative learning website</h1>
+        <p class="subtitle">
+          A general platform for educators and students to study, teach, and collaborate.
+        </p>
+        <p>
+          <a href="/client.html" style="display:inline-block;padding:10px 14px;border:2px solid #000;border-radius:10px;text-decoration:none;color:#000;font-weight:600">Open Web Client</a>
+        </p>
+      </header>
+
+      <section class="grid" aria-label="Main features">
+        <article class="card" id="user-accounts">
+          <h3>User Accounts</h3>
+          <p>Personal accounts for teachers and students with secure access.</p>
+          <ul>
+            <li>Registration and login (teacher/student roles)</li>
+            <li>Profile management</li>
+            <li>Password reset</li>
+          </ul>
+          <!-- Controller: server/controllers/auth.js -->
+          <p>
+            <a href="/api/auth" title="Open auth controller routes (auth.js)">Use auth.js routes</a>
+          </p>
+        </article>
+
+        <article class="card" id="communication-collaboration">
+          <h3>Communication & Collaboration</h3>
+          <p>Keep classes engaged and connected.</p>
+          <ul>
+            <li>Discussion board for teachers and students</li>
+            <li>Commenting and replies under assignments</li>
+            <li>Private classroom/group discussions (timer and leader role)</li>
+            <li>Teacher monitoring of participation</li>
+          </ul>
+          <!-- Controller: server/controllers/classroom.js -->
+          <p>
+            <a href="/api/classrooms" title="Open classroom controller routes (classroom.js)">Use classroom.js routes</a>
+          </p>
+        </article>
+
+        <article class="card" id="assignments-materials">
+          <h3>Assignments & Learning Materials</h3>
+          <p>Create, share, and assess learning content.</p>
+          <ul>
+            <li>Teachers create, assign, and grade assignments</li>
+            <li>Assignment types: Multiple Choice, Short Answer, True/False, Long Answer</li>
+            <li>Upload lecture slides and notes</li>
+            <li>Students can create personal notes</li>
+          </ul>
+          <!-- Controllers: assignment.js, submission.js, upload.js -->
+          <p>
+            <a href="/api/assignments" title="Open assignment controller routes (assignment.js)">Use assignment.js routes</a>
+            ·
+            <a href="/api/submissions" title="Open submission controller routes (submission.js)">Use submission.js routes</a>
+            ·
+            <a href="/api/upload" title="Open upload controller routes (upload.js)">Use upload.js routes</a>
+          </p>
+        </article>
+
+        <article class="card" id="task-bulletin">
+          <h3>Task Manager / Bulletin Board</h3>
+          <p>Stay on top of class updates and student tasks.</p>
+          <ul>
+            <li>Announcements, reminders, and updates</li>
+            <li>Task overview for students (pending and completed)</li>
+          </ul>
+          <!-- No controller yet as requested -->
+        </article>
+      </section>
+
+      <footer>
+        <div>© <span id="year"></span> Collaborative learning website</div>
+      </footer>
+    </div>
+
+    <script>
+      document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+  </body>
+  </html>

@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Collaborative Learning Platform • Web Client</title>
+    <style>
+      :root {
+        --bg: #fff;
+        --text: #111;
+        --muted: #666;
+        --border: #111;
+        --accent: #0a7;
+        --danger: #c22;
+        --warn: #d9822b;
+      }
+      * { box-sizing: border-box; }
+      html, body { height: 100%; }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        line-height: 1.45;
+      }
+      header {
+        border-bottom: 2px solid var(--border);
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      header h1 { font-size: 18px; margin: 0; }
+      .container { max-width: 1200px; margin: 0 auto; padding: 16px; }
+      .grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 14px; }
+      .card { grid-column: span 12; border: 2px solid var(--border); border-radius: 10px; padding: 14px; }
+      @media (min-width: 900px) { .card { grid-column: span 6; } }
+      .card h2 { margin: 0 0 10px; font-size: 18px; }
+      .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+      label { font-size: 12px; color: var(--muted); }
+      input, select, textarea { padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; width: 100%; }
+      textarea { min-height: 70px; }
+      .controls { display: grid; grid-template-columns: repeat(12, 1fr); gap: 10px; }
+      .controls > div { grid-column: span 12; }
+      @media (min-width: 720px) { .controls > div { grid-column: span 6; } }
+      button { padding: 8px 12px; border: 2px solid var(--border); background: var(--bg); border-radius: 999px; cursor: pointer; }
+      button.primary { border-color: var(--accent); }
+      button.danger { border-color: var(--danger); color: var(--danger); }
+      .hint { color: var(--muted); font-size: 12px; }
+      .token {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        max-width: 60ch;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      pre {
+        margin: 0;
+        background: #f6f6f6;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 10px;
+        max-height: 320px;
+        overflow: auto;
+        font-size: 12px;
+      }
+      .stack { display: grid; gap: 8px; }
+      .section-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+      .small { font-size: 12px; }
+      .mono { font-family: ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace; }
+      .spacer { height: 8px; }
+      .hr { border-top: 1px dashed #999; margin: 8px 0; }
+      .hidden { display: none !important; }
+
+      /* Toasts / popups */
+      .toasts {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        z-index: 9999;
+        pointer-events: none; /* allow clicks through except on toast itself */
+      }
+      .toast {
+        pointer-events: auto;
+        min-width: 260px;
+        max-width: 420px;
+        background: #fff;
+        color: var(--text);
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+        padding: 10px 12px;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 10px;
+        animation: toast-in 160ms ease-out;
+      }
+      .toast.success { border-color: var(--accent); }
+      .toast.error { border-color: var(--danger); color: #721c24; background: #fff; }
+      .toast.warn { border-color: var(--warn); }
+      .toast .msg { font-size: 14px; line-height: 1.35; }
+      .toast button.toast-close {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        border-radius: 8px;
+        padding: 2px 6px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+      @keyframes toast-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+      @keyframes toast-out { from { opacity: 1; transform: translateY(0); } to { opacity: 0; transform: translateY(-6px); } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Collaborative Learning Platform</h1>
+      <div class="row">
+        <button id="btnToggleDev" class="small" title="Show/hide technical details (raw API and responses)">Show technical details</button>
+      </div>
+    </header>
+    <div class="container">
+      <div id="devHeader" class="row hidden" aria-hidden="true">
+        <span class="hint">Auth token:</span>
+        <span id="tokenDisplay" class="token mono">&lt;no token&gt;</span>
+        <button id="btnCopyToken" class="small" title="Copy token">Copy</button>
+        <button id="btnClearToken" class="small danger" title="Clear token">Clear</button>
+      </div>
+      <p class="hint">Use the sections below to register or log in, manage classrooms, assignments, submissions, and uploads. For advanced users, enable “Show technical details” to see raw API calls and responses.</p>
+
+      <div class="grid">
+        <!-- AUTH -->
+        <section class="card" id="auth">
+          <h2>User Accounts</h2>
+          <div class="controls">
+            <div>
+              <div class="stack">
+                <strong>Register</strong>
+                <input id="reg_username" placeholder="username" />
+                <input id="reg_email" placeholder="email" type="email" />
+                <input id="reg_password" placeholder="password" type="password" />
+                <select id="reg_role">
+                  <option value="student">student</option>
+                  <option value="teacher">teacher</option>
+                </select>
+                <input id="reg_firstName" placeholder="firstName" />
+                <input id="reg_lastName" placeholder="lastName" />
+                <div class="section-actions">
+                  <button id="btnRegister" class="primary" title="Create a new account">Create account</button>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="stack">
+                <strong>Login</strong>
+                <input id="login_email" placeholder="email" type="email" />
+                <input id="login_password" placeholder="password" type="password" />
+                <div class="section-actions">
+                  <button id="btnLogin" class="primary" title="Log in to your account">Log in</button>
+                  <button id="btnMe" title="View my profile">My profile</button>
+                  <button id="btnLogout" title="Log out">Log out</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- CLASSROOMS -->
+        <section class="card" id="classrooms">
+          <h2>Classrooms</h2>
+          <div class="controls">
+            <div class="stack">
+              <strong>My Classrooms</strong>
+              <div class="section-actions">
+                <button id="btnClassroomsList" title="View classrooms you own or joined">View my classrooms</button>
+              </div>
+            </div>
+            <div class="stack">
+              <strong>Create Classroom (teacher)</strong>
+              <input id="cl_name" placeholder="name" />
+              <input id="cl_subject" placeholder="subject" />
+              <textarea id="cl_description" placeholder="description"></textarea>
+              <div class="section-actions">
+                <button id="btnClassroomCreate" class="primary" title="Create a new classroom">Create classroom</button>
+              </div>
+            </div>
+            <div class="stack">
+              <strong>By ID</strong>
+              <input id="cl_id" placeholder="classroomId" />
+              <div class="section-actions">
+                <button id="btnClassroomGet" title="View classroom details">View classroom</button>
+                <button id="btnClassroomMembers" title="View classroom members">View members</button>
+                <button id="btnClassroomJoinById" class="primary" title="Join this classroom">Join classroom</button>
+                <button id="btnClassroomLeave" class="danger" title="Leave this classroom">Leave classroom</button>
+              </div>
+              <div class="stack">
+                <label>Update (teacher):</label>
+                <input id="cl_upd_name" placeholder="name" />
+                <input id="cl_upd_subject" placeholder="subject" />
+                <textarea id="cl_upd_description" placeholder="description"></textarea>
+                <button id="btnClassroomUpdate" class="primary" title="Update classroom">Update classroom</button>
+                <button id="btnClassroomDelete" class="danger" title="Delete classroom">Delete classroom</button>
+              </div>
+            </div>
+            <div class="stack">
+              <strong>Join by Code (student)</strong>
+              <input id="cl_code" placeholder="classCode (e.g., ABC123)" />
+              <div class="section-actions">
+                <button id="btnClassroomJoinByCode" class="primary" title="Join with class code">Join with code</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ASSIGNMENTS -->
+        <section class="card" id="assignments">
+          <h2>Assignments</h2>
+          <div class="controls">
+            <div class="stack">
+              <strong>List by Classroom</strong>
+              <input id="as_classroomId" placeholder="classroomId" />
+              <div class="section-actions">
+                <button id="btnAssignList" title="View assignments in this classroom">View assignments</button>
+              </div>
+            </div>
+            <div class="stack">
+              <strong>Get by ID</strong>
+              <input id="as_id" placeholder="assignmentId" />
+              <div class="section-actions">
+                <button id="btnAssignGet" title="View assignment details">View assignment</button>
+                <button id="btnAssignDelete" class="danger" title="Delete assignment">Delete assignment</button>
+                <button id="btnAssignPublish" class="primary" title="Publish assignment">Publish assignment</button>
+              </div>
+            </div>
+            <div class="stack">
+              <strong>Create / Update (teacher)</strong>
+              <input id="as_title" placeholder="title" />
+              <textarea id="as_description" placeholder="description"></textarea>
+              <input id="as_classroom" placeholder="classroom (id)" />
+              <input id="as_dueDate" placeholder="dueDate (ISO YYYY-MM-DD or ISO string)" />
+              <input id="as_totalPoints" type="number" placeholder="totalPoints (default 100)" />
+              <input id="as_allowLate" type="checkbox" /> <label for="as_allowLate">allowLateSubmission</label>
+              <input id="as_latePenalty" type="number" placeholder="lateSubmissionPenalty (number per day)" />
+              <textarea id="as_instructions" placeholder="instructions (optional)"></textarea>
+              <textarea id="as_attachments" placeholder='attachments (JSON array of {fileName,fileUrl,fileType,fileSize})'></textarea>
+              <div class="section-actions">
+                <button id="btnAssignCreate" class="primary" title="Create assignment">Create assignment</button>
+                <button id="btnAssignUpdate" class="primary" title="Update assignment">Update assignment</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- SUBMISSIONS -->
+        <section class="card" id="submissions">
+          <h2>Submissions</h2>
+          <div class="controls">
+            <div class="stack">
+              <strong>Create/Update (student)</strong>
+              <input id="sub_assignment" placeholder="assignment (id)" />
+              <textarea id="sub_content" placeholder="content (text)"></textarea>
+              <input id="sub_status" placeholder="status (draft|submitted)" />
+              <textarea id="sub_attachments" placeholder='attachments (JSON array of {fileName,fileUrl,fileType,fileSize})'></textarea>
+              <div class="section-actions">
+                <button id="btnSubCreate" class="primary" title="Submit or save your work">Submit work</button>
+              </div>
+            </div>
+            <div class="stack">
+              <strong>By Assignment</strong>
+              <input id="sub_as_id" placeholder="assignmentId" />
+              <div class="section-actions">
+                <button id="btnSubMy" title="View my submission">View my submission</button>
+                <button id="btnSubAll" title="View all submissions (teacher)">View all submissions</button>
+              </div>
+            </div>
+            <div class="stack">
+              <strong>By Classroom + Student</strong>
+              <input id="sub_classroomId" placeholder="classroomId" />
+              <input id="sub_studentId" placeholder="studentId" />
+              <div class="section-actions">
+                <button id="btnSubByStudent" title="View a student's submissions in a classroom">View student's submissions</button>
+              </div>
+            </div>
+            <div class="stack">
+              <strong>Grade (teacher)</strong>
+              <input id="sub_id" placeholder="submissionId" />
+              <input id="sub_grade" type="number" placeholder="grade (0..n)" />
+              <textarea id="sub_feedback" placeholder="feedback"></textarea>
+              <div class="section-actions">
+                <button id="btnSubGrade" class="primary" title="Grade submission">Grade submission</button>
+                <button id="btnSubDelete" class="danger" title="Delete submission">Delete submission</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- UPLOAD -->
+        <section class="card" id="upload">
+          <h2>Uploads</h2>
+          <div class="controls">
+            <div class="stack">
+              <strong>Single file (teacher)</strong>
+              <input id="up_single" type="file" />
+              <div class="section-actions">
+                <button id="btnUploadSingle" class="primary" title="Upload one file">Upload single file</button>
+              </div>
+            </div>
+            <div class="stack">
+              <strong>Multiple files (teacher)</strong>
+              <input id="up_multiple" type="file" multiple />
+              <div class="section-actions">
+                <button id="btnUploadMultiple" class="primary" title="Upload multiple files">Upload multiple files</button>
+              </div>
+            </div>
+            <div class="stack">
+              <strong>Manage by publicId</strong>
+              <input id="up_publicId" placeholder="publicId" />
+              <div class="section-actions">
+                <button id="btnUploadInfo" title="Get file info">Get file info</button>
+                <button id="btnUploadDelete" class="danger" title="Delete file">Delete file</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- OUTPUT (Developer Tools) -->
+        <section class="card hidden" id="devTools" aria-hidden="true">
+          <h2>Technical details</h2>
+          <div class="row small">
+            <span>Last request:</span>
+            <span id="lastMethod" class="mono"></span>
+            <span id="lastUrl" class="mono"></span>
+            <span id="lastStatus" class="mono"></span>
+            <span id="lastTime" class="mono"></span>
+          </div>
+          <div class="hr"></div>
+          <pre id="out">No calls yet.</pre>
+        </section>
+      </div>
+    </div>
+
+    <!-- Toast container -->
+    <div id="toasts" class="toasts" aria-live="polite" aria-atomic="false"></div>
+
+    <script src="/client.js"></script>
+  </body>
+  </html>
