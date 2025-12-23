@@ -162,6 +162,23 @@ class MainActivity : AppCompatActivity() {
             subject.layoutParams = subjectParams
             content.addView(subject)
 
+            // Teacher info
+            val teacher = TextView(this)
+            teacher.text = "👨‍🏫 Teacher: ${classroomData.teacher.firstName} ${classroomData.teacher.lastName}"
+            teacher.textSize = 14f
+            teacher.setTextColor(Color.parseColor("#16a34a"))
+            teacher.setTypeface(null, android.graphics.Typeface.BOLD)
+            val teacherParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            teacherParams.setMargins(0, 0, 0, 12)
+            teacher.layoutParams = teacherParams
+            content.addView(teacher)
+
+            // Students count - removed since we're not parsing students field
+            // Will add back once we fix the backend response
+
             // Class code
             val code = TextView(this)
             code.text = "🔑 Class Code: ${classroomData.classCode}"
