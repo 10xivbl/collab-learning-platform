@@ -1,4 +1,3 @@
-/* Auth Page Layout */
 .page {
   min-height: 100vh;
   display: grid;
@@ -44,7 +43,7 @@
   box-shadow: var(--shadow);
 }
 
-/* Tab Styles */
+
 .tabs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -71,7 +70,7 @@
   box-shadow: 0 6px 14px rgba(17, 24, 39, 0.08);
 }
 
-/* Form Styles */
+
 form {
   display: none;
   flex-direction: column;

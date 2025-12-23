@@ -1,8 +1,7 @@
 const Classroom = require('../models/Classroom');
 const User = require('../models/User');
 
-// @desc    Create new classroom
-// @route   POST /api/classrooms
+//   Create new classroom
 // @access  Private (Teacher only)
 exports.createClassroom = async (req, res) => {
   try {
@@ -52,8 +51,7 @@ exports.createClassroom = async (req, res) => {
   }
 };
 
-// @desc    Get all classrooms for current user
-// @route   GET /api/classrooms
+// Get all classrooms for current user
 // @access  Private
 exports.getClassrooms = async (req, res) => {
   try {
@@ -87,8 +85,7 @@ exports.getClassrooms = async (req, res) => {
   }
 };
 
-// @desc    Get single classroom by ID
-// @route   GET /api/classrooms/:id
+//  Get single classroom by ID
 // @access  Private
 exports.getClassroom = async (req, res) => {
   try {
@@ -132,8 +129,7 @@ exports.getClassroom = async (req, res) => {
   }
 };
 
-// @desc    Update classroom
-// @route   PUT /api/classrooms/:id
+//    Update classroom
 // @access  Private (Teacher only)
 exports.updateClassroom = async (req, res) => {
   try {
@@ -176,8 +172,7 @@ exports.updateClassroom = async (req, res) => {
   }
 };
 
-// @desc    Delete classroom
-// @route   DELETE /api/classrooms/:id
+//   Delete classroom
 // @access  Private (Teacher only)
 exports.deleteClassroom = async (req, res) => {
   try {
@@ -220,8 +215,7 @@ exports.deleteClassroom = async (req, res) => {
   }
 };
 
-// @desc    Join classroom with class code
-// @route   POST /api/classrooms/join
+//    Join classroom with class code
 // @access  Private (Student only)
 exports.joinClassroom = async (req, res) => {
   try {
@@ -284,8 +278,7 @@ exports.joinClassroom = async (req, res) => {
   }
 };
 
-// @desc    Join classroom by classroom id
-// @route   POST /api/classrooms/:id/join
+//  Join classroom by classroom id
 // @access  Private (Student only)
 exports.joinClassroomById = async (req, res) => {
   try {
@@ -336,8 +329,7 @@ exports.joinClassroomById = async (req, res) => {
   }
 };
 
-// @desc    Get classroom members (teacher and students)
-// @route   GET /api/classrooms/:id/members
+//   Get classroom members (teacher and students)
 // @access  Private (Teacher or enrolled students)
 exports.getClassroomMembers = async (req, res) => {
   try {
@@ -378,8 +370,7 @@ exports.getClassroomMembers = async (req, res) => {
   }
 };
 
-// @desc    Leave classroom
-// @route   POST /api/classrooms/:id/leave
+//    Leave classroom
 // @access  Private (Student only)
 exports.leaveClassroom = async (req, res) => {
   try {

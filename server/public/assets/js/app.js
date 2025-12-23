@@ -1,18 +1,12 @@
-/**
- * Main Application Entry Point
- * Collab Learning Platform - Dashboard
- */
-
 import { apiCall } from './utils/api.js';
 import { getStorage, setStorage, removeStorage, clearStorage } from './utils/storage.js';
 
-// ===== Global State =====
 let currentUser = null;
 let classrooms = [];
 let assignments = [];
 let submissions = [];
 
-// ===== DOM Elements =====
+// DOM
 const DOM = {
   userNameEl: null,
   userRoleEl: null,
@@ -20,7 +14,7 @@ const DOM = {
   teacherElements: null,
   studentElements: null,
   
-  // Classroom elements
+  // classroom
   classroomsList: null,
   createClassroomBtn: null,
   createClassroomModal: null,
@@ -29,14 +23,14 @@ const DOM = {
   joinClassroomModal: null,
   joinClassroomForm: null,
   
-  // Assignment elements
+  // assignment
   assignmentsList: null,
   createAssignmentBtn: null,
   createAssignmentModal: null,
   createAssignmentForm: null,
   assignmentClassroomSelect: null,
   
-  // Submission elements
+  // submission
   submissionsList: null,
   submitAssignmentModal: null,
   submitAssignmentForm: null,
@@ -45,10 +39,10 @@ const DOM = {
   submissionFile: null,
   submissionIsDraft: null,
   
-  // Profile elements
+  // profile
   profileCard: null,
   
-  // Toast notification
+  // toast noti
   toast: null,
   
   init() {
@@ -86,9 +80,7 @@ const DOM = {
   }
 };
 
-// ===== Initialization =====
 document.addEventListener('DOMContentLoaded', async () => {
-  // Initialize DOM references
   DOM.init();
   
   // Check authentication
@@ -120,7 +112,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
-// ===== UI Setup =====
 function setupUI() {
   if (!currentUser) return;
   
@@ -139,7 +130,6 @@ function setupUI() {
   });
 }
 
-// ===== Event Listeners =====
 function attachEventListeners() {
   // Logout
   if (DOM.logoutBtn) {
@@ -203,7 +193,6 @@ function attachEventListeners() {
   });
 }
 
-// ===== Data Loading =====
 async function loadDashboardData() {
   try {
     // Load data sequentially since assignments depend on classrooms, 
@@ -266,7 +255,6 @@ async function loadAssignments() {
 
 async function loadStudentAssignments() {
   try {
-    // For students, get assignments from all enrolled classrooms
     const allAssignments = [];
     for (const classroom of classrooms) {
       const response = await apiCall(`/api/assignments/classroom/${classroom._id}`);
@@ -293,7 +281,6 @@ async function loadSubmissions() {
           allSubmissions.push(...response.submissions);
         }
       } catch (error) {
-        // Some assignments might not have submissions yet
         console.log(`No submissions for assignment ${assignment._id}`);
       }
     }
@@ -316,7 +303,6 @@ async function loadMySubmissions() {
           allSubmissions.push(response.submission);
         }
       } catch (error) {
-        // It's ok if there's no submission for an assignment yet
         console.log(`No submission for assignment ${assignment._id}`);
       }
     }
@@ -328,7 +314,6 @@ async function loadMySubmissions() {
   }
 }
 
-// ===== Rendering Functions =====
 function renderProfile() {
   if (!DOM.profileCard || !currentUser) return;
   
@@ -391,6 +376,7 @@ function renderAssignments() {
   DOM.assignmentsList.innerHTML = assignments.map(assignment => {
     const dueDate = new Date(assignment.dueDate);
     const isOverdue = dueDate < new Date();
+    const isPublished = assignment.status === 'published';
     
     // For students, check if they have a submission for this assignment
     let submissionStatus = null;
@@ -409,9 +395,17 @@ function renderAssignments() {
           <span>Due: ${dueDate.toLocaleDateString()}</span>
           <span>${assignment.totalPoints || assignment.points || 100} points</span>
           ${isOverdue ? '<span class="badge-error">Overdue</span>' : ''}
+          ${currentUser.role === 'teacher' ? `
+            <span class="badge-${isPublished ? 'success' : 'warning'}">${isPublished ? 'Published' : 'Draft'}</span>
+          ` : ''}
           ${submissionStatus ? `<span class="badge-${submissionStatus === 'submitted' ? 'success' : submissionStatus === 'draft' ? 'warning' : 'info'}">${submissionStatus}</span>` : ''}
         </div>
         <div style="margin-top: 12px; display: flex; gap: 8px;">
+          ${currentUser.role === 'teacher' && !isPublished ? `
+            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); publishAssignment('${assignment._id}')">
+              Publish
+            </button>
+          ` : ''}
           ${currentUser.role === 'student' ? `
             <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); submitAssignment('${assignment._id}')">
               ${submissionStatus ? 'Edit Submission' : 'Submit Work'}
@@ -451,7 +445,6 @@ function renderSubmissions() {
   `).join('');
 }
 
-// ===== Form Handlers =====
 async function handleCreateClassroom(e) {
   e.preventDefault();
   
@@ -587,7 +580,6 @@ async function handleSubmitAssignment(e) {
   }
 }
 
-// ===== Helper Functions =====
 function populateClassroomSelect() {
   if (!DOM.assignmentClassroomSelect) return;
   
@@ -628,7 +620,6 @@ function logout() {
   window.location.href = '/auth.html';
 }
 
-// ===== Global Functions (for inline onclick handlers) =====
 window.submitAssignment = async function(assignmentId) {
   console.log('Submit assignment:', assignmentId);
   
@@ -677,6 +668,22 @@ window.viewClassroom = function(classroomId) {
 
 window.viewAssignment = function(assignmentId) {
   window.location.href = `/assignment.html?id=${assignmentId}`;
+};
+
+window.publishAssignment = async function(assignmentId) {
+  if (!confirm('Are you sure you want to publish this assignment? Students will be able to see and submit to it.')) {
+    return;
+  }
+  
+  try {
+    await apiCall(`/api/assignments/${assignmentId}/publish`, 'PUT');
+    showToast('Assignment published successfully!', 'success');
+    
+    await loadAssignments();
+  } catch (error) {
+    console.error('Error publishing assignment:', error);
+    showToast(error.message || 'Failed to publish assignment', 'error');
+  }
 };
 
 // Export for testing/debugging

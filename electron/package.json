@@ -1,13 +1,48 @@
 {
   "name": "collab-learning-electron",
   "version": "1.0.0",
-  "description": "Electron wrapper for Collaborative Learning Platform",
+  "description": "Desktop application for Collaborative Learning Platform - Manage classrooms, assignments, and student submissions",
   "main": "main.js",
+  "author": "10xivbl",
+  "license": "ISC",
   "scripts": {
     "start": "electron .",
-    "dev": "electron ."
+    "dev": "NODE_ENV=development electron .",
+    "build": "electron-builder",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:linux": "electron-builder --linux",
+    "postinstall": "cd ../server && npm install"
+  },
+  "build": {
+    "appId": "com.collablearning.app",
+    "productName": "Collaborative Learning Platform",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "package.json",
+      "error.html",
+      "../server/**/*",
+      "!../server/node_modules/**/*"
+    ],
+    "mac": {
+      "category": "public.app-category.education",
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "target": ["nsis", "portable"]
+    },
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Education"
+    }
   },
   "dependencies": {
     "electron": "^28.0.0"
+  },
+  "devDependencies": {
+    "electron-builder": "^24.0.0"
   }
 }

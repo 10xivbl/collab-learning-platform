@@ -1,0 +1,24 @@
+{
+  "name": "collab-learning-platform",
+  "version": "1.0.0",
+  "description": "Collaborative Learning Platform - Desktop Application",
+  "scripts": {
+    "start": "cd electron && npm start",
+    "dev": "cd electron && npm run dev",
+    "server": "cd server && npm run dev",
+    "build": "cd electron && npm run build",
+    "build:mac": "cd electron && npm run build:mac",
+    "build:win": "cd electron && npm run build:win",
+    "build:linux": "cd electron && npm run build:linux",
+    "install-all": "cd server && npm install && cd ../electron && npm install",
+    "clean": "rm -rf electron/node_modules server/node_modules electron/dist"
+  },
+  "keywords": [
+    "education",
+    "learning",
+    "electron",
+    "desktop-app"
+  ],
+  "author": "10xivbl",
+  "license": "ISC"
+}

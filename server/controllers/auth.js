@@ -8,9 +8,7 @@ const generateToken = (id) => {
   });
 };
 
-// @desc    Register new user
-// @route   POST /api/auth/register
-// @access  Public
+//    register new user
 exports.register = async (req, res) => {
   try {
     const { username, email, password, role, firstName, lastName } = req.body;
@@ -71,8 +69,6 @@ exports.register = async (req, res) => {
   }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
 // @access  Public
 exports.login = async (req, res) => {
   try {
@@ -132,8 +128,6 @@ exports.login = async (req, res) => {
   }
 };
 
-// @desc    Get current logged in user
-// @route   GET /api/auth/me
 // @access  Private
 exports.getMe = async (req, res) => {
   try {
@@ -162,10 +156,7 @@ exports.getMe = async (req, res) => {
   }
 };
 
-// @desc    Logout user (stateless JWT)
-// @route   POST /api/auth/logout
-// @access  Public
-// Note: With stateless JWT, logout is handled client-side by deleting the token.
+
 exports.logout = async (req, res) => {
   try {
     return res.status(200).json({

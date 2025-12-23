@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Error - Collaborative Learning Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .error-container {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .error-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2d3748;
+            font-size: 28px;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .error-message {
+            color: #4a5568;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .troubleshooting {
+            background: #f7fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .troubleshooting h2 {
+            color: #2d3748;
+            font-size: 18px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .troubleshooting ol {
+            color: #4a5568;
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .troubleshooting li {
+            margin-bottom: 8px;
+        }
+
+        .troubleshooting code {
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            color: #c53030;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #e2e8f0;
+            color: #2d3748;
+        }
+
+        .btn-secondary:hover {
+            background: #cbd5e0;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        .status.checking {
+            background: #bee3f8;
+            color: #2c5282;
+            display: block;
+        }
+
+        .status.success {
+            background: #c6f6d5;
+            color: #22543d;
+            display: block;
+        }
+
+        .status.error {
+            background: #fed7d7;
+            color: #742a2a;
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+            display: inline-block;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <div class="error-icon">⚠️</div>
+        <h1>Server Connection Error</h1>
+        <p class="error-message">
+            Unable to connect to the application server. The server may not have started correctly.
+        </p>
+
+        <div class="troubleshooting">
+            <h2>📋 Troubleshooting Steps:</h2>
+            <ol>
+                <li>Make sure <strong>MongoDB</strong> is running on your system</li>
+                <li>Check that all server dependencies are installed:
+                    <br><code>cd server && npm install</code>
+                </li>
+                <li>Verify your <code>.env</code> file is configured with:
+                    <ul style="margin-top: 8px; list-style-type: disc;">
+                        <li>MongoDB connection string</li>
+                        <li>JWT secret</li>
+                        <li>Cloudinary credentials (if using file uploads)</li>
+                    </ul>
+                </li>
+                <li>Check the console logs for specific error messages</li>
+                <li>Try restarting the application</li>
+            </ol>
+        </div>
+
+        <div id="status" class="status"></div>
+
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="retryConnection()">
+                🔄 Retry Connection
+            </button>
+            <button class="btn btn-secondary" onclick="closeApp()">
+                ✕ Close Application
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const statusDiv = document.getElementById('status');
+
+        async function retryConnection() {
+            statusDiv.className = 'status checking';
+            statusDiv.innerHTML = '<span class="spinner"></span> Connecting to server...';
+
+            try {
+                const response = await fetch('http://localhost:3000/status', {
+                    method: 'GET',
+                    timeout: 5000
+                });
+
+                if (response.ok) {
+                    statusDiv.className = 'status success';
+                    statusDiv.textContent = '✓ Server connection successful! Redirecting...';
+                    
+                    setTimeout(() => {
+                        window.location.href = 'http://localhost:3000';
+                    }, 1000);
+                } else {
+                    throw new Error('Server returned error status');
+                }
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.textContent = '✗ Still unable to connect. Please check the troubleshooting steps above.';
+                
+                setTimeout(() => {
+                    statusDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        function closeApp() {
+            if (window.require) {
+                const { remote } = window.require('electron');
+                const currentWindow = remote.getCurrentWindow();
+                currentWindow.close();
+            } else {
+                window.close();
+            }
+        }
+
+        // Auto-retry connection every 5 seconds
+        let retryCount = 0;
+        const maxRetries = 6; // 30 seconds total
+
+        const autoRetryInterval = setInterval(async () => {
+            if (retryCount >= maxRetries) {
+                clearInterval(autoRetryInterval);
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/status');
+                if (response.ok) {
+                    clearInterval(autoRetryInterval);
+                    window.location.href = 'http://localhost:3000';
+                }
+            } catch (error) {
+                // Server still not available
+            }
+
+            retryCount++;
+        }, 5000);
+    </script>
+</body>
+</html>

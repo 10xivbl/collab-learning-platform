@@ -212,6 +212,9 @@ function renderAssignment() {
 function renderSubmissions() {
   if (!DOM.submissionsList) return;
   
+  console.log('All submissions:', submissions);
+  console.log('First submission attachments:', submissions[0]?.attachments);
+  
   if (DOM.submissionCount) {
     DOM.submissionCount.textContent = submissions.length;
   }
@@ -222,6 +225,7 @@ function renderSubmissions() {
   }
   
   DOM.submissionsList.innerHTML = submissions.map(submission => {
+    console.log('Processing submission:', submission._id, 'attachments:', submission.attachments);
     const student = submission.student;
     const studentName = getFullName(student);
     const studentInitial = studentName.charAt(0).toUpperCase();

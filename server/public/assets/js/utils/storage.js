@@ -1,13 +1,3 @@
-/**
- * Local Storage Utility
- * Handles browser storage operations
- */
-
-/**
- * Save data to localStorage
- * @param {string} key - Storage key
- * @param {any} value - Value to store (will be JSON stringified if object)
- */
 function setStorage(key, value) {
   try {
     const stringValue = typeof value === 'string' ? value : JSON.stringify(value);
@@ -17,12 +7,8 @@ function setStorage(key, value) {
   }
 }
 
-/**
- * Get data from localStorage
- * @param {string} key - Storage key
- * @param {boolean} parse - Whether to parse JSON (default: false)
- * @returns {any} - Stored value or null
- */
+//Get data from localStorage
+
 function getStorage(key, parse = false) {
   try {
     const value = localStorage.getItem(key);
@@ -43,10 +29,8 @@ function getStorage(key, parse = false) {
   }
 }
 
-/**
- * Remove data from localStorage
- * @param {string} key - Storage key
- */
+// Remove data from localStorage
+
 function removeStorage(key) {
   try {
     localStorage.removeItem(key);
@@ -55,9 +39,7 @@ function removeStorage(key) {
   }
 }
 
-/**
- * Clear all localStorage
- */
+// Clear all localStorage
 function clearStorage() {
   try {
     localStorage.clear();
@@ -66,37 +48,28 @@ function clearStorage() {
   }
 }
 
-/**
- * Check if user is authenticated
- * @returns {boolean}
- */
+// Check if user is authenticated
+
 function isAuthenticated() {
   const token = getStorage('token');
   const user = getStorage('user', true);
   return !!(token && user);
 }
 
-/**
- * Get current user data
- * @returns {Object|null}
- */
+// Get current user data
+
 function getCurrentUser() {
   return getStorage('user', true);
 }
 
-/**
- * Save authentication data
- * @param {string} token - JWT token
- * @param {Object} user - User data
- */
+// Save authentication data
+
 function saveAuth(token, user) {
   setStorage('token', token);
   setStorage('user', user);
 }
 
-/**
- * Clear authentication data
- */
+//Clear authentication data
 function clearAuth() {
   removeStorage('token');
   removeStorage('user');

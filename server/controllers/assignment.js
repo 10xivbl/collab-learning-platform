@@ -1,9 +1,6 @@
 const Assignment = require('../models/Assignment');
 const Classroom = require('../models/Classroom');
 
-// @desc    Create new assignment
-// @route   POST /api/assignments
-// @access  Private (Teacher only)
 exports.createAssignment = async (req, res) => {
   try {
     const {
@@ -57,7 +54,7 @@ exports.createAssignment = async (req, res) => {
       attachments: attachments || []
     });
 
-    // Add assignment to classroom
+    // add assignment to classroom
     classroomDoc.assignments.push(assignment._id);
     await classroomDoc.save();
 
@@ -76,9 +73,7 @@ exports.createAssignment = async (req, res) => {
   }
 };
 
-// @desc    Get all assignments for a classroom
-// @route   GET /api/assignments/classroom/:classroomId
-// @access  Private
+
 exports.getClassroomAssignments = async (req, res) => {
   try {
     const { classroomId } = req.params;
@@ -129,9 +124,6 @@ exports.getClassroomAssignments = async (req, res) => {
   }
 };
 
-// @desc    Get single assignment
-// @route   GET /api/assignments/:id
-// @access  Private
 exports.getAssignment = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id)
@@ -181,9 +173,6 @@ exports.getAssignment = async (req, res) => {
   }
 };
 
-// @desc    Update assignment
-// @route   PUT /api/assignments/:id
-// @access  Private (Teacher only)
 exports.updateAssignment = async (req, res) => {
   try {
     let assignment = await Assignment.findById(req.params.id);
@@ -225,9 +214,6 @@ exports.updateAssignment = async (req, res) => {
   }
 };
 
-// @desc    Delete assignment
-// @route   DELETE /api/assignments/:id
-// @access  Private (Teacher only)
 exports.deleteAssignment = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id);
@@ -269,9 +255,6 @@ exports.deleteAssignment = async (req, res) => {
   }
 };
 
-// @desc    Publish assignment (change status to published)
-// @route   PUT /api/assignments/:id/publish
-// @access  Private (Teacher only)
 exports.publishAssignment = async (req, res) => {
   try {
     const assignment = await Assignment.findById(req.params.id);

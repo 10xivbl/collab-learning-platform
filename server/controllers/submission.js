@@ -3,11 +3,12 @@ const Assignment = require('../models/Assignment');
 const Classroom = require('../models/Classroom');
 
 // @desc    Create or update submission
-// @route   POST /api/submissions
 // @access  Private (Student only)
 exports.createSubmission = async (req, res) => {
   try {
     const { assignment, content, attachments, status } = req.body;
+    
+    console.log('Creating submission with data:', { assignment, content, attachments, status });
 
     // validate required fields
     if (!assignment) {
@@ -117,8 +118,7 @@ exports.createSubmission = async (req, res) => {
   }
 };
 
-// @desc    Get all submissions for an assignment
-// @route   GET /api/submissions/assignment/:assignmentId
+//   Get all submissions for an assignment
 // @access  Private (Teacher only)
 exports.getAssignmentSubmissions = async (req, res) => {
   try {
@@ -146,6 +146,12 @@ exports.getAssignmentSubmissions = async (req, res) => {
       .populate('assignment', 'title dueDate totalPoints')
       .sort('-submittedAt');
 
+    console.log('Fetched submissions for assignment:', assignmentId);
+    console.log('Number of submissions:', submissions.length);
+    if (submissions.length > 0) {
+      console.log('First submission data:', JSON.stringify(submissions[0], null, 2));
+    }
+
     res.status(200).json({
       success: true,
       count: submissions.length,
@@ -162,7 +168,6 @@ exports.getAssignmentSubmissions = async (req, res) => {
 };
 
 // @desc    Get student's own submission for an assignment
-// @route   GET /api/submissions/assignment/:assignmentId/my-submission
 // @access  Private (Student only)
 exports.getMySubmission = async (req, res) => {
   try {
@@ -260,8 +265,7 @@ exports.gradeSubmission = async (req, res) => {
   }
 };
 
-// @desc    Get all submissions by a student in a classroom
-// @route   GET /api/submissions/classroom/:classroomId/student/:studentId
+//   Get all submissions by a student in a classroom
 // @access  Private (Teacher or own student)
 exports.getStudentSubmissions = async (req, res) => {
   try {
@@ -309,8 +313,7 @@ exports.getStudentSubmissions = async (req, res) => {
   }
 };
 
-// @desc    Delete submission
-// @route   DELETE /api/submissions/:id
+//  Delete submission
 // @access  Private (Student - only if not graded)
 exports.deleteSubmission = async (req, res) => {
   try {

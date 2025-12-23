@@ -1,7 +1,6 @@
 const { cloudinary } = require('../config/cloudinary');
 
-// @desc    Upload single file
-// @route   POST /api/upload/assignment
+//    Upload single file
 // @access  Private (Teachers only)
 exports.uploadSingle = async (req, res) => {
   try {
@@ -33,8 +32,7 @@ exports.uploadSingle = async (req, res) => {
   }
 };
 
-// @desc    Upload multiple files
-// @route   POST /api/upload/assignment/multiple
+//  Upload multiple files
 // @access  Private (Teachers only)
 exports.uploadMultiple = async (req, res) => {
   try {
@@ -69,7 +67,6 @@ exports.uploadMultiple = async (req, res) => {
 };
 
 // @desc    Delete file from Cloudinary
-// @route   DELETE /api/upload/:publicId
 // @access  Private (Teachers only)
 exports.deleteFile = async (req, res) => {
   try {
@@ -98,8 +95,7 @@ exports.deleteFile = async (req, res) => {
   }
 };
 
-// @desc    Get file info
-// @route   GET /api/upload/info/:publicId
+//    Get file info
 // @access  Private
 exports.getFileInfo = async (req, res) => {
   try {
