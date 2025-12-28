@@ -10,6 +10,7 @@ import { getStorage, clearStorage } from './utils/storage.js';
 let currentUser = null;
 let assignment = null;
 let submissions = [];
+let mySubmission = null;
 let assignmentId = null;
 
 // ===== DOM Elements =====
@@ -18,11 +19,20 @@ const DOM = {
   assignmentContent: null,
   assignmentTitle: null,
   assignmentDescription: null,
+  assignmentAttachments: null,
   dueDate: null,
   totalPoints: null,
   submissionCount: null,
   submissionsList: null,
   mySubmissionContent: null,
+  formSubmitAssignment: null,
+  submissionContentInput: null,
+  submissionFileInput: null,
+  btnSubmitAssignment: null,
+  btnClearForm: null,
+  submitFormTitle: null,
+  currentFileDisplay: null,
+  currentFileName: null,
   btnLogout: null,
   toast: null,
   teacherElements: null,
@@ -33,11 +43,20 @@ const DOM = {
     this.assignmentContent = document.getElementById('assignmentContent');
     this.assignmentTitle = document.getElementById('assignmentTitle');
     this.assignmentDescription = document.getElementById('assignmentDescription');
+    this.assignmentAttachments = document.getElementById('assignmentAttachments');
     this.dueDate = document.getElementById('dueDate');
     this.totalPoints = document.getElementById('totalPoints');
     this.submissionCount = document.getElementById('submissionCount');
     this.submissionsList = document.getElementById('submissionsList');
     this.mySubmissionContent = document.getElementById('mySubmissionContent');
+    this.formSubmitAssignment = document.getElementById('formSubmitAssignment');
+    this.submissionContentInput = document.getElementById('submissionContent');
+    this.submissionFileInput = document.getElementById('submissionFile');
+    this.btnSubmitAssignment = document.getElementById('btnSubmitAssignment');
+    this.btnClearForm = document.getElementById('btnClearForm');
+    this.submitFormTitle = document.getElementById('submitFormTitle');
+    this.currentFileDisplay = document.getElementById('currentFileDisplay');
+    this.currentFileName = document.getElementById('currentFileName');
     this.btnLogout = document.getElementById('btnLogout');
     this.toast = document.getElementById('toast');
     this.teacherElements = document.querySelectorAll('[data-role="teacher"]');
@@ -118,6 +137,16 @@ function attachEventListeners() {
   if (DOM.btnLogout) {
     DOM.btnLogout.addEventListener('click', logout);
   }
+
+  // Submit assignment form
+  if (DOM.formSubmitAssignment) {
+    DOM.formSubmitAssignment.addEventListener('submit', handleSubmitAssignment);
+  }
+
+  // Clear form button
+  if (DOM.btnClearForm) {
+    DOM.btnClearForm.addEventListener('click', clearSubmissionForm);
+  }
 }
 
 // ===== Data Loading =====
@@ -159,20 +188,21 @@ async function loadAllSubmissions() {
 async function loadMySubmission() {
   try {
     const response = await apiCall(`/api/submissions/assignment/${assignmentId}/my-submission`);
-    const mySubmission = response.submission;
+    mySubmission = response.submission;
     
     console.log('My submission data:', mySubmission);
     
     renderMySubmission(mySubmission);
+    populateSubmissionForm(mySubmission);
     
     DOM.loadingState.style.display = 'none';
     DOM.assignmentContent.style.display = 'block';
   } catch (error) {
     console.error('Error loading my submission:', error);
+    mySubmission = null;
     DOM.mySubmissionContent.innerHTML = `
-      <p class="empty-state">
-        You haven't submitted this assignment yet.<br>
-        <a href="/index.html" style="color: #2196f3; text-decoration: none;">Go to dashboard to submit</a>
+      <p class="empty-state" style="color: #666;">
+        You haven't submitted this assignment yet. Use the form below to submit your work.
       </p>
     `;
     
@@ -206,6 +236,20 @@ function renderAssignment() {
   
   if (DOM.totalPoints) {
     DOM.totalPoints.textContent = assignment.totalPoints || assignment.points || 100;
+  }
+
+  // Render assignment attachments
+  if (DOM.assignmentAttachments) {
+    if (assignment.attachments && assignment.attachments.length > 0) {
+      DOM.assignmentAttachments.innerHTML = assignment.attachments.map(att => `
+        <a href="${getDownloadUrl(att.fileUrl, att.fileName)}" target="_blank" download="${att.fileName}" class="attachment-link" style="display: inline-flex; margin: 8px 8px 0 0;">
+          ${att.fileName}
+          ${att.fileSize ? `<span style="color: #999; font-size: 11px; margin-left: 6px;">(${formatFileSize(att.fileSize)})</span>` : ''}
+        </a>
+      `).join('');
+    } else {
+      DOM.assignmentAttachments.innerHTML = '<p class="empty-state">No materials attached</p>';
+    }
   }
 }
 
@@ -254,8 +298,8 @@ function renderSubmissions() {
           <div class="submission-attachments">
             <strong style="font-size: 13px; color: #666;">Attachments:</strong><br>
             ${submission.attachments.map(att => `
-              <a href="${att.fileUrl}" target="_blank" class="attachment-link">
-                📎 ${att.fileName}
+              <a href="${getDownloadUrl(att.fileUrl, att.fileName)}" target="_blank" download="${att.fileName}" class="attachment-link">
+                ${att.fileName}
               </a>
             `).join(' ')}
           </div>
@@ -330,7 +374,7 @@ function renderMySubmission(submission) {
         <div class="submission-attachments" style="margin-top: 16px;">
           <strong style="font-size: 13px; color: #666;">Attachments:</strong><br>
           ${submission.attachments.map(att => `
-            <a href="${att.fileUrl}" target="_blank" class="attachment-link" style="margin-top: 8px;">
+            <a href="${getDownloadUrl(att.fileUrl, att.fileName)}" target="_blank" download="${att.fileName}" class="attachment-link" style="margin-top: 8px;">
               📎 ${att.fileName}
             </a>
           `).join(' ')}
@@ -431,6 +475,228 @@ window.gradeSubmission = async function(submissionId) {
     showToast(error.message || 'Failed to grade submission', 'error');
   }
 };
+
+// ===== Submission Form Handlers =====
+function populateSubmissionForm(submission) {
+  if (!submission) {
+    // Clear form for new submission
+    if (DOM.submitFormTitle) {
+      DOM.submitFormTitle.textContent = '✍️ Submit Your Work';
+    }
+    if (DOM.btnSubmitAssignment) {
+      DOM.btnSubmitAssignment.textContent = 'Submit Assignment';
+    }
+    return;
+  }
+
+  // Populate form with existing submission
+  if (DOM.submissionContentInput) {
+    DOM.submissionContentInput.value = submission.content || '';
+  }
+
+  // Show existing file info
+  if (submission.attachments && submission.attachments.length > 0) {
+    if (DOM.currentFileDisplay) {
+      DOM.currentFileDisplay.style.display = 'block';
+    }
+    if (DOM.currentFileName) {
+      DOM.currentFileName.textContent = submission.attachments[0].fileName;
+    }
+  }
+
+  // Update form title and button
+  if (DOM.submitFormTitle) {
+    DOM.submitFormTitle.textContent = '✏️ Update Submission';
+  }
+  if (DOM.btnSubmitAssignment) {
+    DOM.btnSubmitAssignment.textContent = 'Update Submission';
+  }
+  if (DOM.btnClearForm) {
+    DOM.btnClearForm.style.display = 'inline-block';
+  }
+}
+
+async function handleSubmitAssignment(e) {
+  e.preventDefault();
+
+  const content = DOM.submissionContentInput?.value;
+  const file = DOM.submissionFileInput?.files[0];
+
+  if (!content || content.trim() === '') {
+    showToast('Please enter your submission content', 'error');
+    return;
+  }
+
+  try {
+    let attachments = [];
+    let fileUploadFailed = false;
+
+    // Upload file if provided
+    if (file) {
+      showToast('Uploading file...', 'info');
+      
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      
+      try {
+        const uploadResponse = await apiCall('/api/upload/submission', 'POST', uploadFormData, true);
+        
+        if (uploadResponse.file) {
+          attachments.push({
+            fileName: uploadResponse.file.fileName,
+            fileUrl: uploadResponse.file.fileUrl,
+            fileType: uploadResponse.file.fileType,
+            fileSize: uploadResponse.file.fileSize
+          });
+          console.log('File uploaded successfully:', uploadResponse.file);
+        }
+      } catch (uploadError) {
+        console.error('File upload error:', uploadError);
+        fileUploadFailed = true;
+        
+        // Ask user if they want to continue without file
+        const continueWithoutFile = confirm(
+          'Failed to upload file: ' + uploadError.message + 
+          '\n\nDo you want to submit without the new file attachment?'
+        );
+        
+        if (!continueWithoutFile) {
+          showToast('Submission cancelled', 'info');
+          return;
+        }
+        
+        // If updating and user wants to continue, keep old attachments
+        if (mySubmission?.attachments) {
+          attachments = mySubmission.attachments;
+        }
+      }
+    } else {
+      // No new file, preserve existing attachments if updating
+      if (mySubmission?.attachments) {
+        attachments = mySubmission.attachments;
+      }
+    }
+
+    // Create or update submission
+    const submissionData = {
+      assignment: assignmentId,
+      content: content.trim(),
+      status: 'submitted',
+      attachments: attachments
+    };
+
+    console.log('Submitting with data:', submissionData);
+
+    let response;
+    if (mySubmission) {
+      // Update existing submission
+      response = await apiCall(`/api/submissions/${mySubmission._id}`, 'PUT', submissionData);
+      showToast(fileUploadFailed ? 'Submission updated (file upload failed)' : 'Submission updated successfully!', 
+                fileUploadFailed ? 'info' : 'success');
+    } else {
+      // Create new submission
+      response = await apiCall('/api/submissions', 'POST', submissionData);
+      showToast(fileUploadFailed ? 'Assignment submitted (file upload failed)' : 'Assignment submitted successfully!', 
+                fileUploadFailed ? 'info' : 'success');
+    }
+
+    // Clear file input
+    if (DOM.submissionFileInput) {
+      DOM.submissionFileInput.value = '';
+    }
+
+    // Reload submission data
+    await loadMySubmission();
+  } catch (error) {
+    console.error('Error submitting assignment:', error);
+    showToast(error.message || 'Failed to submit assignment', 'error');
+  }
+}
+
+function clearSubmissionForm() {
+  if (DOM.submissionContentInput) {
+    DOM.submissionContentInput.value = '';
+  }
+  if (DOM.submissionFileInput) {
+    DOM.submissionFileInput.value = '';
+  }
+  if (DOM.currentFileDisplay) {
+    DOM.currentFileDisplay.style.display = 'none';
+  }
+  if (DOM.btnClearForm) {
+    DOM.btnClearForm.style.display = 'none';
+  }
+  if (DOM.submitFormTitle) {
+    DOM.submitFormTitle.textContent = '✍️ Submit Your Work';
+  }
+  if (DOM.btnSubmitAssignment) {
+    DOM.btnSubmitAssignment.textContent = 'Submit Assignment';
+  }
+}
+
+// Helper function to format file size
+function formatFileSize(bytes) {
+  if (!bytes) return '';
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
+// Helper function to ensure proper download URL
+function getDownloadUrl(fileUrl, fileName) {
+  if (!fileUrl) return fileUrl;
+  
+  // Check if it's a Cloudinary URL
+  const cloudinaryPattern = /https:\/\/res\.cloudinary\.com\/([^\/]+)\/(raw|image)\/upload\/(.+)/;
+  const match = fileUrl.match(cloudinaryPattern);
+  
+  if (match) {
+    const cloudName = match[1];
+    const resourceType = match[2];
+    const pathAfterUpload = match[3];
+    
+    // Only detect PDFs by file extension
+    const isPdf = pathAfterUpload.toLowerCase().includes('.pdf') || fileName?.toLowerCase().endsWith('.pdf');
+    
+    // Remove any existing flags from the path
+    const cleanPath = pathAfterUpload.replace(/^fl_attachment[^\/]*\//, '');
+    
+    // Only convert to raw and add attachment flag for PDFs
+    if (isPdf) {
+      const correctResourceType = resourceType === 'image' ? 'raw' : resourceType;
+      return `https://res.cloudinary.com/${cloudName}/${correctResourceType}/upload/fl_attachment/${cleanPath}`;
+    } else {
+      // For images and other files, return clean URL for viewing
+      return `https://res.cloudinary.com/${cloudName}/${resourceType}/upload/${cleanPath}`;
+    }
+  }
+  
+  return fileUrl;
+}
+
+// Helper function to download file with proper handling
+async function downloadFile(fileUrl, fileName) {
+  try {
+    // Ensure the URL has proper download flags
+    const downloadUrl = getDownloadUrl(fileUrl, fileName);
+    
+    // Create a temporary link and trigger download
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = fileName || 'download';
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Download error:', error);
+    showToast('Failed to download file', 'error');
+  }
+}
+
+// Make downloadFile available globally
+window.downloadFile = downloadFile;
 
 // Export for debugging
 export {

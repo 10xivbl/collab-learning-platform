@@ -213,4 +213,40 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("publicId") publicId: String
     ): Call<UploadResponse>
+    // ==================== ANNOUNCEMENT ROUTES ====================
+    // GET /api/announcements/classroom/{classroomId}
+    @GET("api/announcements/classroom/{classroomId}")
+    fun getClassroomAnnouncements(
+        @Header("Authorization") token: String,
+        @Path("classroomId") classroomId: String
+    ): Call<AnnouncementResponse>
+
+    // GET /api/announcements/{id}
+    @GET("api/announcements/{id}")
+    fun getAnnouncement(
+        @Header("Authorization") token: String,
+        @Path("id") announcementId: String
+    ): Call<SingleAnnouncementResponse>
+
+    // POST /api/announcements (teacher only)
+    @POST("api/announcements")
+    fun createAnnouncement(
+        @Header("Authorization") token: String,
+        @Body request: CreateAnnouncementRequest
+    ): Call<SingleAnnouncementResponse>
+
+    // PUT /api/announcements/{id} (teacher only)
+    @PUT("api/announcements/{id}")
+    fun updateAnnouncement(
+        @Header("Authorization") token: String,
+        @Path("id") announcementId: String,
+        @Body request: UpdateAnnouncementRequest
+    ): Call<SingleAnnouncementResponse>
+
+    // DELETE /api/announcements/{id} (teacher only)
+    @DELETE("api/announcements/{id}")
+    fun deleteAnnouncement(
+        @Header("Authorization") token: String,
+        @Path("id") announcementId: String
+    ): Call<GenericResponse>
 }

@@ -434,6 +434,53 @@
       background: #e3f2fd;
       color: #1976d2;
     }
+
+    /* Form Styles */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .form-group textarea {
+      font-family: inherit;
+    }
+
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(240, 147, 251, 0.4);
+    }
+
+    .btn-secondary {
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+
+    .btn-secondary:hover {
+      background: #e0e0e0;
+    }
   </style>
 </head>
 <body>
@@ -483,6 +530,16 @@
           </div>
         </div>
 
+        <!-- Assignment Attachments (for both roles) -->
+        <div class="section">
+          <div class="info-card">
+            <h2> Assignment Materials</h2>
+            <div id="assignmentAttachments">
+              <p class="empty-state">No materials attached</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Teacher View: All Submissions -->
         <div class="section" data-role="teacher">
           <div class="info-card">
@@ -496,10 +553,37 @@
         <!-- Student View: My Submission -->
         <div class="section" data-role="student">
           <div class="info-card">
-            <h2> My Submission</h2>
+            <h2>📝 My Submission</h2>
             <div id="mySubmissionContent">
               <!-- Student's submission will be inserted here -->
             </div>
+          </div>
+        </div>
+
+        <!-- Student View: Submit/Edit Assignment Form -->
+        <div class="section" data-role="student">
+          <div class="info-card">
+            <h2 id="submitFormTitle">✍️ Submit Your Work</h2>
+            <form id="formSubmitAssignment" style="display: flex; flex-direction: column; gap: 16px;">
+              <div class="form-group">
+                <label for="submissionContent">Your Work *</label>
+                <textarea id="submissionContent" name="content" placeholder="Enter your submission text here..." required style="min-height: 150px; padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; font-family: inherit; resize: vertical;"></textarea>
+              </div>
+              
+              <div class="form-group">
+                <label for="submissionFile">Attach File (Optional)</label>
+                <input type="file" id="submissionFile" name="file" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.ppt,.pptx,.xls,.xlsx" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                <small style="color: #666; margin-top: 4px; display: block;">Supported formats: PDF, DOC, DOCX, TXT, PPT, XLS, images</small>
+                <div id="currentFileDisplay" style="margin-top: 8px; display: none;">
+                  <small style="color: #666;">Current file: <span id="currentFileName"></span></small>
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button type="button" id="btnClearForm" class="btn btn-secondary" style="display: none;">Clear Form</button>
+                <button type="submit" class="btn btn-primary" id="btnSubmitAssignment">Submit Assignment</button>
+              </div>
+            </form>
           </div>
         </div>
       </div>

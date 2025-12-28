@@ -41,6 +41,15 @@ const DOM = {
   
   // profile
   profileCard: null,
+  profileCardHeader: null,
+  headerProfileArea: null,
+  headerProfileName: null,
+  headerProfileRole: null,
+  profilePopup: null,
+  popupProfileName: null,
+  popupProfileRole: null,
+  popupProfileEmail: null,
+  popupProfileId: null,
   
   // toast noti
   toast: null,
@@ -74,7 +83,16 @@ const DOM = {
     this.submissionFile = document.getElementById('submissionFile');
     this.submissionIsDraft = document.getElementById('submissionIsDraft');
     
-    this.profileCard = document.getElementById('profileCard');
+  this.profileCard = document.getElementById('profileCard');
+  this.profileCardHeader = document.getElementById('profileCardHeader');
+  this.headerProfileArea = document.getElementById('headerProfileArea');
+  this.headerProfileName = document.getElementById('headerProfileName');
+  this.headerProfileRole = document.getElementById('headerProfileRole');
+  this.profilePopup = document.getElementById('profilePopup');
+  this.popupProfileName = document.getElementById('popupProfileName');
+  this.popupProfileRole = document.getElementById('popupProfileRole');
+  this.popupProfileEmail = document.getElementById('popupProfileEmail');
+  this.popupProfileId = document.getElementById('popupProfileId');
     
     this.toast = document.getElementById('toast');
   }
@@ -191,6 +209,27 @@ function attachEventListeners() {
       }
     });
   });
+
+  // Profile popup logic (moved from submitAssignment)
+  if (DOM.headerProfileArea && DOM.profilePopup) {
+    let popupOpen = false;
+    DOM.headerProfileArea.addEventListener('click', (e) => {
+      e.stopPropagation();
+      popupOpen = !popupOpen;
+      if (popupOpen) {
+        DOM.profilePopup.classList.add('show');
+      } else {
+        DOM.profilePopup.classList.remove('show');
+      }
+    });
+    // Hide popup when clicking outside
+    document.addEventListener('click', (e) => {
+      if (popupOpen && !DOM.profilePopup.contains(e.target) && !DOM.headerProfileArea.contains(e.target)) {
+        DOM.profilePopup.classList.remove('show');
+        popupOpen = false;
+      }
+    });
+  }
 }
 
 async function loadDashboardData() {
@@ -206,6 +245,9 @@ async function loadDashboardData() {
       await loadStudentAssignments();
       await loadMySubmissions();
     }
+    
+    // Load announcements
+    await loadDashboardAnnouncements();
   } catch (error) {
     console.error('Error loading dashboard data:', error);
     showToast('Failed to load some data', 'error');
@@ -315,15 +357,9 @@ async function loadMySubmissions() {
 }
 
 function renderProfile() {
-  if (!DOM.profileCard || !currentUser) return;
-  
+  if (!currentUser) return;
   const fullName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.name || currentUser.username || 'N/A';
-  
-  // Add the classroom-card styling directly to the container
-  DOM.profileCard.className = 'classroom-card';
-  DOM.profileCard.style.marginBottom = '0';
-  
-  DOM.profileCard.innerHTML = `
+  const profileHtml = `
     <div style="display: flex; flex-direction: column; gap: 10px;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
         <span style="color: #666; font-size: 14px;">Name:</span>
@@ -343,6 +379,20 @@ function renderProfile() {
       </div>
     </div>
   `;
+  renderProfileCard(profileHtml);
+  // Render name and role in header
+  if (DOM.headerProfileName) {
+    DOM.headerProfileName.textContent = fullName;
+  }
+  if (DOM.headerProfileRole) {
+    DOM.headerProfileRole.textContent = currentUser.role;
+    DOM.headerProfileRole.className = 'role-badge ' + (currentUser.role || '');
+  }
+  // Render popup details
+  if (DOM.popupProfileName) DOM.popupProfileName.textContent = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.name || currentUser.username || 'N/A';
+  if (DOM.popupProfileRole) DOM.popupProfileRole.textContent = currentUser.role;
+  if (DOM.popupProfileEmail) DOM.popupProfileEmail.textContent = currentUser.email || 'N/A';
+  if (DOM.popupProfileId) DOM.popupProfileId.textContent = currentUser.id || currentUser._id || 'N/A';
 }
 
 function renderClassrooms() {
@@ -378,6 +428,10 @@ function renderAssignments() {
     const isOverdue = dueDate < new Date();
     const isPublished = assignment.status === 'published';
     
+    // Get classroom name
+    const classroomName = assignment.classroom?.name || 'Unknown Classroom';
+    const classroomCode = assignment.classroom?.classCode || assignment.classroom?.code || '';
+    
     // For students, check if they have a submission for this assignment
     let submissionStatus = null;
     if (currentUser.role === 'student') {
@@ -389,7 +443,12 @@ function renderAssignments() {
     
     return `
       <div class="card assignment-card" data-id="${assignment._id}" onclick="viewAssignment('${assignment._id}')" style="cursor: pointer;">
-        <h3>${assignment.title}</h3>
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+          <h3 style="margin: 0;">${assignment.title}</h3>
+          <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap; margin-left: 8px;">
+            ${classroomName}
+          </span>
+        </div>
         <p class="muted">${assignment.description}</p>
         <div class="assignment-info">
           <span>Due: ${dueDate.toLocaleDateString()}</span>
@@ -404,6 +463,11 @@ function renderAssignments() {
           ${currentUser.role === 'teacher' && !isPublished ? `
             <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); publishAssignment('${assignment._id}')">
               Publish
+            </button>
+          ` : ''}
+          ${currentUser.role === 'teacher' ? `
+            <button class="btn btn-sm" style="background: #f44336; color: white;" onclick="event.stopPropagation(); deleteAssignment('${assignment._id}')">
+              Delete
             </button>
           ` : ''}
           ${currentUser.role === 'student' ? `
@@ -444,6 +508,46 @@ function renderSubmissions() {
     </div>
   `).join('');
 }
+
+// ===== Bulletin/Announcement Dashboard Logic =====
+async function loadDashboardAnnouncements() {
+  const bulletinList = document.getElementById('bulletinList');
+  if (!bulletinList) return;
+  bulletinList.innerHTML = '<p class="muted">Loading announcements...</p>';
+  try {
+    const res = await apiCall('/api/announcements/my');
+    if (res.announcements && res.announcements.length > 0) {
+      bulletinList.innerHTML = res.announcements.map(a => {
+        const classroomName = a.classroom?.name || 'Unknown Classroom';
+        const createdAt = new Date(a.createdAt);
+        const day = String(createdAt.getDate()).padStart(2, '0');
+        const month = String(createdAt.getMonth() + 1).padStart(2, '0');
+        const year = createdAt.getFullYear();
+        const dateStr = `${day}/${month}/${year}`;
+        return `
+          <div class="card assignment-card announcement-card" style="cursor: default;">
+            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+              <h3 style="margin: 0;">${a.title || 'Announcement'}</h3>
+                 <span style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; white-space: nowrap; margin-left: 8px;">
+                   ${classroomName}
+              </span>
+            </div>
+            <div class="muted" style="font-size: 13px; margin-bottom: 6px;">
+              by ${a.createdBy?.firstName || ''} ${a.createdBy?.lastName || a.createdBy?.username || ''} • ${dateStr}
+            </div>
+            <div class="announcement-content">${a.content}</div>
+          </div>
+        `;
+      }).join('');
+    } else {
+      bulletinList.innerHTML = '<p class="muted">No announcements yet.</p>';
+    }
+  } catch (err) {
+    bulletinList.innerHTML = '<p class="muted">Failed to load announcements.</p>';
+  }
+}
+
+window.addEventListener('DOMContentLoaded', loadDashboardAnnouncements);
 
 async function handleCreateClassroom(e) {
   e.preventDefault();
@@ -502,10 +606,40 @@ async function handleCreateAssignment(e) {
     title: formData.get('assignmentTitle'),
     description: formData.get('assignmentDescription'),
     dueDate: formData.get('assignmentDueDate'),
-    totalPoints: parseInt(formData.get('assignmentPoints'))
+    totalPoints: parseInt(formData.get('assignmentPoints')),
+    attachments: []
   };
   
   try {
+    // Upload files if provided
+    const files = formData.getAll('files');
+    if (files && files.length > 0 && files[0].size > 0) {
+      showToast('Uploading materials...', 'info');
+      
+      for (const file of files) {
+        if (file.size > 0) {
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', file);
+          
+          try {
+            const uploadResponse = await apiCall('/api/upload/assignment', 'POST', uploadFormData, true);
+            
+            if (uploadResponse.file) {
+              assignmentData.attachments.push({
+                fileName: uploadResponse.file.fileName,
+                fileUrl: uploadResponse.file.fileUrl,
+                fileType: uploadResponse.file.fileType,
+                fileSize: uploadResponse.file.fileSize
+              });
+            }
+          } catch (uploadError) {
+            console.error('Error uploading file:', uploadError);
+            showToast(`Failed to upload ${file.name}`, 'error');
+          }
+        }
+      }
+    }
+    
     const response = await apiCall('/api/assignments', 'POST', assignmentData);
     showToast('Assignment created successfully!', 'success');
     closeModal(DOM.createAssignmentModal);
@@ -523,7 +657,6 @@ async function handleSubmitAssignment(e) {
   const formData = new FormData(e.target);
   const assignmentId = formData.get('assignmentId');
   const content = formData.get('content');
-  const isDraft = formData.get('isDraft') === 'on';
   const file = formData.get('file');
   
   try {
@@ -537,14 +670,14 @@ async function handleSubmitAssignment(e) {
       uploadFormData.append('file', file);
       
       try {
-        const uploadResponse = await apiCall('/api/upload', 'POST', uploadFormData, true);
+        const uploadResponse = await apiCall('/api/upload/submission', 'POST', uploadFormData, true);
         
-        if (uploadResponse.fileUrl) {
+        if (uploadResponse.file) {
           attachments.push({
-            fileName: file.name,
-            fileUrl: uploadResponse.fileUrl,
-            fileType: file.type,
-            fileSize: file.size
+            fileName: uploadResponse.file.fileName,
+            fileUrl: uploadResponse.file.fileUrl,
+            fileType: uploadResponse.file.fileType,
+            fileSize: uploadResponse.file.fileSize
           });
         }
       } catch (uploadError) {
@@ -558,16 +691,13 @@ async function handleSubmitAssignment(e) {
       assignment: assignmentId,
       content: content,
       attachments: attachments,
-      status: isDraft ? 'draft' : 'submitted'
+      status: 'submitted'
     };
     
     // Submit the assignment
     const response = await apiCall('/api/submissions', 'POST', submissionData);
     
-    showToast(
-      isDraft ? 'Draft saved successfully!' : 'Assignment submitted successfully!', 
-      'success'
-    );
+    showToast('Assignment submitted successfully!', 'success');
     
     closeModal(DOM.submitAssignmentModal);
     e.target.reset();
@@ -641,6 +771,7 @@ window.submitAssignment = async function(assignmentId) {
   
   // Pre-fill form if editing existing submission
   if (existingSubmission && DOM.submissionContent) {
+  // ...existing code...
     DOM.submissionContent.value = existingSubmission.content || '';
     
     if (DOM.submissionIsDraft) {
@@ -686,11 +817,37 @@ window.publishAssignment = async function(assignmentId) {
   }
 };
 
-// Export for testing/debugging
+window.deleteAssignment = async function(assignmentId) {
+  if (!confirm('Are you sure you want to delete this assignment? This action cannot be undone. All submissions will also be deleted.')) {
+    return;
+  }
+  
+  try {
+    await apiCall(`/api/assignments/${assignmentId}`, 'DELETE');
+    showToast('Assignment deleted successfully!', 'success');
+    
+    // Reload assignments to update the list
+    await loadAssignments();
+  } catch (error) {
+    console.error('Error deleting assignment:', error);
+    showToast(error.message || 'Failed to delete assignment', 'error');
+  }
+};
+
+
+// Render profile card in both header and main if present
+function renderProfileCard(profileHtml) {
+  if (DOM.profileCard) DOM.profileCard.innerHTML = profileHtml;
+  if (DOM.profileCardHeader) DOM.profileCardHeader.innerHTML = profileHtml;
+}
+
+// Example usage: replace your existing profile rendering logic with renderProfileCard(profileHtml)
+
 export {
   currentUser,
   classrooms,
   assignments,
   submissions,
-  loadDashboardData
+  loadDashboardData,
+  renderProfileCard
 };

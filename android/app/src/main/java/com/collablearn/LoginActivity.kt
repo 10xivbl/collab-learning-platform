@@ -5,8 +5,10 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.collablearn.ui.RegisterActivity
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -16,6 +18,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var emailInput: EditText
     private lateinit var passwordInput: EditText
     private lateinit var loginButton: Button
+    private lateinit var registerLink: TextView
     private lateinit var progressBar: ProgressBar
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -26,6 +29,7 @@ class LoginActivity : AppCompatActivity() {
         emailInput = findViewById(R.id.emailInput)
         passwordInput = findViewById(R.id.passwordInput)
         loginButton = findViewById(R.id.loginButton)
+        registerLink = findViewById(R.id.registerLink)
         progressBar = findViewById(R.id.progressBar)
 
         // Check if already logged in
@@ -48,6 +52,10 @@ class LoginActivity : AppCompatActivity() {
             }
 
             performLogin(email, password)
+        }
+
+        registerLink.setOnClickListener {
+            startActivity(Intent(this, RegisterActivity::class.java))
         }
     }
 

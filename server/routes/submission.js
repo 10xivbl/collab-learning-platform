@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
   createSubmission,
+  updateSubmission,
   getAssignmentSubmissions,
   getMySubmission,
   gradeSubmission,
@@ -13,8 +14,11 @@ const { protect, authorize } = require('../middleware/auth');
 // all routes require authentication
 router.use(protect);
 
-// student creates/updates submission
+// student creates submission
 router.post('/', authorize('student'), createSubmission);
+
+// student updates submission
+router.put('/:id', authorize('student'), updateSubmission);
 
 // get all submissions for an assignment (teacher only)
 router.get('/assignment/:assignmentId', authorize('teacher'), getAssignmentSubmissions);

@@ -10,7 +10,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="🎓 Collab Learn"
+        android:text="Collab Learn"
         android:textSize="32sp"
         android:textStyle="bold"
         android:textColor="#667eea"
@@ -47,7 +47,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="textPassword"
-        android:text="password123"
         android:padding="12dp"
         android:background="@android:drawable/edit_text"
         android:layout_marginBottom="24dp"/>
@@ -58,7 +57,19 @@
         android:layout_height="wrap_content"
         android:text="Login"
         android:textSize="16sp"
-        android:padding="12dp"/>
+        android:padding="12dp"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:id="@+id/registerLink"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Don't have an account? Register"
+        android:textSize="14sp"
+        android:textColor="#667eea"
+        android:clickable="true"
+        android:focusable="true"
+        android:layout_gravity="center"/>
 
     <ProgressBar
         android:id="@+id/progressBar"

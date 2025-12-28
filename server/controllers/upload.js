@@ -11,12 +11,33 @@ exports.uploadSingle = async (req, res) => {
       });
     }
 
+    console.log('File uploaded:', {
+      originalName: req.file.originalname,
+      mimeType: req.file.mimetype,
+      size: req.file.size,
+      filename: req.file.filename
+    });
+
+    // Generate proper download URL with attachment flag
+    let fileUrl = req.file.path;
+    
+    // For PDFs and other raw files, ensure download URL is properly formatted
+    if (req.file.mimetype === 'application/pdf' || !req.file.mimetype.startsWith('image/')) {
+      const publicId = req.file.filename;
+      fileUrl = cloudinary.url(publicId, {
+        resource_type: 'raw',
+        flags: 'attachment',
+        secure: true
+      });
+      console.log('Generated download URL for non-image file:', fileUrl);
+    }
+
     res.status(200).json({
       success: true,
       message: 'File uploaded successfully',
       file: {
         fileName: req.file.originalname,
-        fileUrl: req.file.path,
+        fileUrl: fileUrl,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
         publicId: req.file.filename
@@ -43,13 +64,28 @@ exports.uploadMultiple = async (req, res) => {
       });
     }
 
-    const files = req.files.map(file => ({
-      fileName: file.originalname,
-      fileUrl: file.path,
-      fileType: file.mimetype,
-      fileSize: file.size,
-      publicId: file.filename
-    }));
+    const files = req.files.map(file => {
+      // Generate proper download URL with attachment flag
+      let fileUrl = file.path;
+      
+      // For PDFs and other raw files, ensure download URL is properly formatted
+      if (file.mimetype === 'application/pdf' || !file.mimetype.startsWith('image/')) {
+        const publicId = file.filename;
+        fileUrl = cloudinary.url(publicId, {
+          resource_type: 'raw',
+          flags: 'attachment',
+          secure: true
+        });
+      }
+
+      return {
+        fileName: file.originalname,
+        fileUrl: fileUrl,
+        fileType: file.mimetype,
+        fileSize: file.size,
+        publicId: file.filename
+      };
+    });
 
     res.status(200).json({
       success: true,
@@ -119,6 +155,54 @@ exports.getFileInfo = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error fetching file info',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Generate download URL for a file
+// @access  Private
+exports.getDownloadUrl = async (req, res) => {
+  try {
+    const { publicId } = req.params;
+    const { fileName } = req.query;
+    
+    // Generate a download URL with proper flags
+    let downloadUrl;
+    
+    try {
+      // Try to get resource info to determine type
+      const resource = await cloudinary.api.resource(publicId, { resource_type: 'raw' });
+      
+      // Generate URL with attachment flag
+      downloadUrl = cloudinary.url(publicId, {
+        resource_type: 'raw',
+        flags: 'attachment:' + (fileName || resource.public_id),
+        secure: true
+      });
+    } catch (rawError) {
+      // If not raw, try as image
+      try {
+        const resource = await cloudinary.api.resource(publicId, { resource_type: 'image' });
+        downloadUrl = cloudinary.url(publicId, {
+          resource_type: 'image',
+          flags: 'attachment:' + (fileName || resource.public_id),
+          secure: true
+        });
+      } catch (imageError) {
+        throw new Error('File not found in Cloudinary');
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      downloadUrl
+    });
+  } catch (error) {
+    console.error('Get download URL error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error generating download URL',
       error: error.message
     });
   }

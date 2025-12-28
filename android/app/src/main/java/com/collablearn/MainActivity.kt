@@ -21,9 +21,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var loadClassroomsButton: Button
     private lateinit var logoutButton: Button
+    // Removed announcementButton
     private lateinit var classroomsList: LinearLayout
     private lateinit var progressBar: ProgressBar
     private var token: String = ""
+    // Removed selectedClassroomId
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,6 +36,7 @@ class MainActivity : AppCompatActivity() {
         statusText = findViewById(R.id.statusText)
         loadClassroomsButton = findViewById(R.id.loadClassroomsButton)
         logoutButton = findViewById(R.id.logoutButton)
+            // Removed announcementButton initialization
         classroomsList = findViewById(R.id.classroomsList)
         progressBar = findViewById(R.id.progressBar)
 
@@ -47,7 +50,8 @@ class MainActivity : AppCompatActivity() {
 
         // Button clicks
         loadClassroomsButton.setOnClickListener { loadClassrooms() }
-        logoutButton.setOnClickListener { logout() }
+        logoutButton.setOnClickListener {logout()}
+            // Removed announcementButton click logic
     }
 
     private fun loadClassrooms() {
@@ -112,95 +116,141 @@ class MainActivity : AppCompatActivity() {
             card.cardElevation = 8f
             card.radius = 16f
             card.setCardBackgroundColor(Color.WHITE)
-            card.setContentPadding(48, 48, 48, 48)
+            runOnUiThread {
+                // Create card
+                val card = CardView(this)
+                val params = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                params.setMargins(16, 16, 16, 16)
+                card.layoutParams = params
+                card.cardElevation = 8f
+                card.radius = 16f
+                card.setCardBackgroundColor(Color.WHITE)
+                card.setContentPadding(48, 48, 48, 48)
 
-            // Create content
-            val content = LinearLayout(this)
-            content.orientation = LinearLayout.VERTICAL
-            content.layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
+                // Make card clickable
+                card.isClickable = true
+                card.isFocusable = true
+                card.setOnClickListener {
+                    val intent = Intent(this, ClassroomDetailActivity::class.java)
+                    intent.putExtra("classroomId", classroomData._id)
+                    startActivity(intent)
+                }
 
-            // Title
-            val title = TextView(this)
-            title.text = classroomData.name
-            title.textSize = 22f
-            title.setTextColor(Color.parseColor("#000000"))
-            title.setTypeface(null, android.graphics.Typeface.BOLD)
-            val titleParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            titleParams.setMargins(0, 0, 0, 24)
-            title.layoutParams = titleParams
-            content.addView(title)
+                // Create content
+                val content = LinearLayout(this)
+                content.orientation = LinearLayout.VERTICAL
+                content.layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
 
-            // Description
-            val description = TextView(this)
-            description.text = classroomData.description
-            description.textSize = 16f
-            description.setTextColor(Color.parseColor("#666666"))
-            val descParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            descParams.setMargins(0, 0, 0, 16)
-            description.layoutParams = descParams
-            content.addView(description)
+                // Title
+                val title = TextView(this)
+                title.text = classroomData.name
+                title.textSize = 22f
+                title.setTextColor(Color.parseColor("#000000"))
+                title.setTypeface(null, android.graphics.Typeface.BOLD)
+                val titleParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                titleParams.setMargins(0, 0, 0, 24)
+                title.layoutParams = titleParams
+                content.addView(title)
 
-            // Subject
-            val subject = TextView(this)
-            subject.text = "📖 Subject: ${classroomData.subject}"
-            subject.textSize = 14f
-            subject.setTextColor(Color.parseColor("#888888"))
-            val subjectParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            subjectParams.setMargins(0, 0, 0, 12)
-            subject.layoutParams = subjectParams
-            content.addView(subject)
+                // Description
+                val description = TextView(this)
+                description.text = classroomData.description
+                description.textSize = 16f
+                description.setTextColor(Color.parseColor("#666666"))
+                val descParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                descParams.setMargins(0, 0, 0, 16)
+                description.layoutParams = descParams
+                content.addView(description)
 
-            // Teacher info
-            val teacher = TextView(this)
-            teacher.text = "👨‍🏫 Teacher: ${classroomData.teacher.firstName} ${classroomData.teacher.lastName}"
-            teacher.textSize = 14f
-            teacher.setTextColor(Color.parseColor("#16a34a"))
-            teacher.setTypeface(null, android.graphics.Typeface.BOLD)
-            val teacherParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-            teacherParams.setMargins(0, 0, 0, 12)
-            teacher.layoutParams = teacherParams
-            content.addView(teacher)
+                // Subject
+                val subject = TextView(this)
+                subject.text = "Subject: ${classroomData.subject}"
+                subject.textSize = 14f
+                subject.setTextColor(Color.parseColor("#888888"))
+                val subjectParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                subjectParams.setMargins(0, 0, 0, 12)
+                subject.layoutParams = subjectParams
+                content.addView(subject)
 
-            // Students count - removed since we're not parsing students field
-            // Will add back once we fix the backend response
+                // Teacher info
+                val teacher = TextView(this)
+                teacher.text = "Teacher: ${classroomData.teacher.firstName} ${classroomData.teacher.lastName}"
+                teacher.textSize = 14f
+                teacher.setTextColor(Color.parseColor("#16a34a"))
+                teacher.setTypeface(null, android.graphics.Typeface.BOLD)
+                val teacherParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                )
+                teacherParams.setMargins(0, 0, 0, 12)
+                teacher.layoutParams = teacherParams
+                content.addView(teacher)
 
-            // Class code
-            val code = TextView(this)
-            code.text = "🔑 Class Code: ${classroomData.classCode}"
-            code.textSize = 14f
-            code.setTextColor(Color.parseColor("#667eea"))
-            code.setTypeface(null, android.graphics.Typeface.BOLD)
-            content.addView(code)
+                // Class code
+                val code = TextView(this)
+                code.text = "Class Code: ${classroomData.classCode}"
+                code.textSize = 14f
+                code.setTextColor(Color.parseColor("#667eea"))
+                code.setTypeface(null, android.graphics.Typeface.BOLD)
+                content.addView(code)
 
-            card.addView(content)
-            classroomsList.addView(card)
+                // Announcements (fetch and show latest)
+                val announcementText = TextView(this)
+                announcementText.text = "Loading announcements..."
+                announcementText.textSize = 14f
+                announcementText.setTextColor(Color.parseColor("#333333"))
+                content.addView(announcementText)
 
-            // Debug log
-            Toast.makeText(this, "Added classroom: ${classroomData.name}", Toast.LENGTH_SHORT).show()
+                // Fetch latest announcement for this classroom
+                ApiClient.apiService.getClassroomAnnouncements("Bearer $token", classroomData._id)
+                    .enqueue(object : retrofit2.Callback<AnnouncementResponse> {
+                        override fun onResponse(
+                            call: retrofit2.Call<AnnouncementResponse>,
+                            response: retrofit2.Response<AnnouncementResponse>
+                        ) {
+                            if (response.isSuccessful && response.body() != null && response.body()!!.announcements.isNotEmpty()) {
+                                val latest = response.body()!!.announcements[0]
+                                val authorName = latest.createdBy?.let {
+                                    listOfNotNull(it.firstName, it.lastName).joinToString(" ").ifBlank { it.username ?: "Unknown" }
+                                } ?: "Unknown"
+                                announcementText.text = "Announcement: ${latest.title}\n${latest.content}\nBy: $authorName"
+                            } else {
+                                announcementText.text = "No announcements yet."
+                            }
+                        }
+                        override fun onFailure(call: retrofit2.Call<AnnouncementResponse>, t: Throwable) {
+                            announcementText.text = "Failed to load announcements."
+                        }
+                    })
+
+                card.addView(content)
+                classroomsList.addView(card)
+
+                // Debug log
+                Toast.makeText(this, "Added classroom: ${classroomData.name}", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 
     private fun logout() {
         val prefs = getSharedPreferences("auth", MODE_PRIVATE)
         prefs.edit().clear().apply()
-
         Toast.makeText(this, "Logged out", Toast.LENGTH_SHORT).show()
-
         val intent = Intent(this, LoginActivity::class.java)
         startActivity(intent)
         finish()

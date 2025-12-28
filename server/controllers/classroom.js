@@ -115,9 +115,27 @@ exports.getClassroom = async (req, res) => {
       });
     }
 
+    // Fetch assignments for this classroom
+    const Assignment = require('../models/Assignment');
+    
+    // For students, only show published assignments
+    // For teachers, show all assignments
+    const assignmentFilter = { classroom: req.params.id };
+    if (!isTeacher) {
+      assignmentFilter.status = 'published';
+    }
+    
+    const assignments = await Assignment.find(assignmentFilter)
+      .sort({ createdAt: -1 });
+
+    console.log('Fetching assignments for classroom:', req.params.id);
+    console.log('Is teacher:', isTeacher);
+    console.log('Assignments found:', assignments.length);
+
     res.status(200).json({
       success: true,
-      classroom
+      classroom,
+      assignments
     });
   } catch (error) {
     console.error('Get classroom error:', error);

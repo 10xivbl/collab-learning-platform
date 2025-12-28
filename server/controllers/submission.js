@@ -2,6 +2,50 @@ const Submission = require('../models/Submission');
 const Assignment = require('../models/Assignment');
 const Classroom = require('../models/Classroom');
 
+// Helper function to fix Cloudinary URLs for proper downloads
+const fixCloudinaryUrl = (fileUrl) => {
+  if (!fileUrl) return fileUrl;
+  
+  // Pattern to match Cloudinary URLs
+  const cloudinaryPattern = /https:\/\/res\.cloudinary\.com\/([^\/]+)\/(raw|image)\/upload\/(.+)/;
+  const match = fileUrl.match(cloudinaryPattern);
+  
+  if (match) {
+    const cloudName = match[1];
+    const resourceType = match[2];
+    const pathAfterUpload = match[3];
+    
+    // Only check for PDF files specifically by extension
+    const isPdf = pathAfterUpload.toLowerCase().includes('.pdf');
+    
+    // Only convert to raw if it's actually a PDF uploaded as image
+    const correctResourceType = (isPdf && resourceType === 'image') ? 'raw' : resourceType;
+    
+    // Remove any existing flags
+    const cleanPath = pathAfterUpload.replace(/^fl_attachment[^\/]*\//, '');
+    
+    // For PDFs, add attachment flag. For images, just ensure clean URL
+    if (isPdf) {
+      return `https://res.cloudinary.com/${cloudName}/${correctResourceType}/upload/fl_attachment/${cleanPath}`;
+    } else {
+      // For images, return clean URL without attachment flag so they can be viewed
+      return `https://res.cloudinary.com/${cloudName}/${correctResourceType}/upload/${cleanPath}`;
+    }
+  }
+  
+  return fileUrl;
+};
+
+// Helper function to fix attachments array
+const fixAttachments = (attachments) => {
+  if (!attachments || !Array.isArray(attachments)) return attachments;
+  
+  return attachments.map(att => ({
+    ...att,
+    fileUrl: fixCloudinaryUrl(att.fileUrl)
+  }));
+};
+
 // @desc    Create or update submission
 // @access  Private (Student only)
 exports.createSubmission = async (req, res) => {
@@ -90,7 +134,7 @@ exports.createSubmission = async (req, res) => {
       classroom: assignmentDoc.classroom,
       content,
       attachments: attachments || [],
-      status: status || 'draft'
+      status: status || 'submitted'
     });
 
     // add submission to assignment
@@ -113,6 +157,88 @@ exports.createSubmission = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error creating submission',
+      error: error.message
+    });
+  }
+};
+
+// @desc    Update existing submission
+// @access  Private (Student only)
+exports.updateSubmission = async (req, res) => {
+  try {
+    const { content, attachments, status } = req.body;
+    
+    console.log('Updating submission:', req.params.id, 'with data:', { content, attachments, status });
+
+    // Find the submission
+    const submission = await Submission.findById(req.params.id);
+
+    if (!submission) {
+      return res.status(404).json({
+        success: false,
+        message: 'Submission not found'
+      });
+    }
+
+    // Check if user is the student who created it
+    if (submission.student.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'You can only update your own submissions'
+      });
+    }
+
+    // Don't allow updates after submission is graded
+    if (submission.status === 'graded' || submission.status === 'returned') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot modify submission after it has been graded'
+      });
+    }
+
+    // Check if assignment still accepts submissions
+    const assignmentDoc = await Assignment.findById(submission.assignment);
+    if (!assignmentDoc.allowLateSubmission && new Date() > assignmentDoc.dueDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'This assignment no longer accepts submissions (past due date)'
+      });
+    }
+
+    // Update submission fields
+    if (content !== undefined) {
+      submission.content = content;
+    }
+    
+    if (attachments !== undefined && Array.isArray(attachments)) {
+      // If new attachments provided, merge with existing ones or replace
+      if (attachments.length > 0) {
+        submission.attachments = attachments;
+      }
+    }
+    
+    if (status !== undefined) {
+      submission.status = status;
+    }
+
+    await submission.save();
+
+    // Populate for response
+    await submission.populate([
+      { path: 'assignment', select: 'title dueDate totalPoints' },
+      { path: 'student', select: 'username email firstName lastName' }
+    ]);
+
+    res.status(200).json({
+      success: true,
+      message: 'Submission updated successfully',
+      submission
+    });
+  } catch (error) {
+    console.error('Update submission error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating submission',
       error: error.message
     });
   }
@@ -152,10 +278,17 @@ exports.getAssignmentSubmissions = async (req, res) => {
       console.log('First submission data:', JSON.stringify(submissions[0], null, 2));
     }
 
+    // Fix attachment URLs for proper downloads
+    const fixedSubmissions = submissions.map(sub => {
+      const subObj = sub.toObject();
+      subObj.attachments = fixAttachments(subObj.attachments);
+      return subObj;
+    });
+
     res.status(200).json({
       success: true,
-      count: submissions.length,
-      submissions
+      count: fixedSubmissions.length,
+      submissions: fixedSubmissions
     });
   } catch (error) {
     console.error('Get submissions error:', error);
@@ -187,9 +320,13 @@ exports.getMySubmission = async (req, res) => {
       });
     }
 
+    // Fix attachment URLs for proper downloads
+    const submissionObj = submission.toObject();
+    submissionObj.attachments = fixAttachments(submissionObj.attachments);
+
     res.status(200).json({
       success: true,
-      submission
+      submission: submissionObj
     });
   } catch (error) {
     console.error('Get my submission error:', error);

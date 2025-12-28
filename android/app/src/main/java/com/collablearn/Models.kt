@@ -103,17 +103,22 @@ data class JoinClassroomRequest(
 
 data class ClassroomMembersResponse(
     val success: Boolean,
-    val members: List<Student>
+    val members: ClassroomMembers
+)
+
+data class ClassroomMembers(
+    val teacher: Student,
+    val students: List<Student>
 )
 
 data class Student(
-    val _id: String,
-    val id: String? = null,  // Some endpoints might return 'id' instead of '_id'
+    val _id: String? = null,
+    val id: String? = null,
     val username: String,
     val email: String,
     val firstName: String,
     val lastName: String,
-    val role: String? = null  // Make role optional as it might not always be returned
+    val role: String? = null
 )
 
 // ==================== ASSIGNMENT MODELS ====================

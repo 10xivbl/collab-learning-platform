@@ -17,7 +17,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="🎓 CollabLearn"
+            android:text="CollabLearn"
             android:textColor="#FFFFFF"
             android:textSize="22sp"
             android:textStyle="bold"/>
@@ -57,7 +57,7 @@
                 android:id="@+id/loadClassroomsButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="📚 LOAD MY CLASSROOMS"
+                android:text="LOAD MY CLASSROOMS"
                 android:textSize="16sp"
                 android:layout_marginBottom="16dp"/>
 

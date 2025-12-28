@@ -39,7 +39,7 @@ const submissionSchema = new mongoose.Schema({
   status: {
     type: String,
     enum: ['draft', 'submitted', 'graded', 'returned'],
-    default: 'draft'
+    default: 'submitted'
   },
   submittedAt: {
     type: Date

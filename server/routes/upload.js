@@ -4,10 +4,11 @@ const {
   uploadSingle,
   uploadMultiple,
   deleteFile,
-  getFileInfo
+  getFileInfo,
+  getDownloadUrl
 } = require('../controllers/upload');
 const { protect, authorize } = require('../middleware/auth');
-const { uploadAssignment } = require('../config/cloudinary');
+const { uploadAssignment, uploadSubmission } = require('../config/cloudinary');
 
 // all routes require authentication
 router.use(protect);
@@ -28,10 +29,27 @@ router.post(
   uploadMultiple
 );
 
+// upload single file for submissions (students and teachers)
+router.post(
+  '/submission', 
+  uploadSubmission.single('file'),
+  uploadSingle
+);
+
+// upload multiple files for submissions (students and teachers)
+router.post(
+  '/submission/multiple',
+  uploadSubmission.array('files', 5),
+  uploadMultiple
+);
+
 // delete file (teachers only)
 router.delete('/:publicId', authorize('teacher'), deleteFile);
 
 // get file info (all authenticated users)
 router.get('/info/:publicId', getFileInfo);
+
+// get download URL for file (all authenticated users)
+router.get('/download/:publicId', getDownloadUrl);
 
 module.exports = router;

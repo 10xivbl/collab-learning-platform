@@ -161,11 +161,13 @@ class ExampleApiUsageActivity : AppCompatActivity() {
             classroomId = classroomId,
             onSuccess = { response ->
                 if (response.success) {
-                    val members = response.members
-                    Toast.makeText(this, "${members.size} members", Toast.LENGTH_SHORT).show()
+                    val membersData = response.members
+                    val totalMembers = 1 + membersData.students.size
+                    Toast.makeText(this, "$totalMembers members", Toast.LENGTH_SHORT).show()
                     
-                    members.forEach { member ->
-                        println("Member: ${member.firstName} ${member.lastName} (${member.role})")
+                    println("Teacher: ${membersData.teacher.firstName} ${membersData.teacher.lastName}")
+                    membersData.students.forEach { student ->
+                        println("Student: ${student.firstName} ${student.lastName}")
                     }
                 }
             },

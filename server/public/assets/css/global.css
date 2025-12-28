@@ -1,3 +1,96 @@
+/* Announcement card */
+.announcement-card {
+  background: #f9f9f9;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid #e0e0e0;
+  box-shadow: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.announcement-card .announcement-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.announcement-card .announcement-title {
+  font-weight: 600;
+  font-size: 16px;
+  color: #222;
+}
+.announcement-card .announcement-meta {
+  font-size: 13px;
+  color: #666;
+  font-style: italic;
+}
+.announcement-card .announcement-content {
+  font-size: 15px;
+  color: #333;
+  margin-top: 2px;
+  white-space: pre-line;
+}
+
+/* Header profile area */
+.header-profile-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 32px;
+  cursor: pointer;
+  padding: 6px 16px;
+  border-radius: 18px;
+  background: #f5f7fa;
+  transition: background 0.15s;
+}
+.header-profile-area:hover {
+  background: #e3eafc;
+}
+
+/* Profile popup */
+.profile-popup {
+  display: none;
+  position: absolute;
+  top: 60px;
+  left: 180px;
+  min-width: 240px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.13);
+  z-index: 2000;
+  padding: 18px 22px;
+}
+.profile-popup.show {
+  display: block;
+}
+.profile-popup-content {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.popup-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+}
+.popup-label {
+  color: #888;
+  font-size: 14px;
+  min-width: 70px;
+}
+
+@media (max-width: 900px) {
+  .profile-header-fixed {
+    position: static;
+    width: 100%;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+}
 :root {
   --bg: #f8f8fb;
   --panel: #ffffff;

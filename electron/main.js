@@ -313,8 +313,6 @@ app.whenReady().then(async () => {
       console.log('The server will attempt to start anyway...');
     }
 
-    await startServer();
-
     createWindow();
   } catch (error) {
     console.error('Failed to start application:', error);

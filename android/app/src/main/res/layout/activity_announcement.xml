@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <EditText
+        android:id="@+id/announcementTitleInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Announcement Title"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/announcementContentInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Announcement Content"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/createAnnouncementButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create Announcement"
+        android:layout_gravity="end"
+        android:layout_marginBottom="16dp" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/announcementRecyclerView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+</LinearLayout>

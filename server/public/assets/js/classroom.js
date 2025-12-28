@@ -10,6 +10,7 @@ import { getStorage, clearStorage } from './utils/storage.js';
 let currentUser = null;
 let classroom = null;
 let classroomId = null;
+let assignments = [];
 
 // ===== DOM Elements =====
 const DOM = {
@@ -26,6 +27,8 @@ const DOM = {
   teacherEmail: null,
   studentCount: null,
   studentsList: null,
+  assignmentsList: null,
+  btnCreateAssignment: null,
   btnDeleteClassroom: null,
   btnBack: null,
   modalDeleteConfirm: null,
@@ -49,6 +52,8 @@ const DOM = {
     this.teacherEmail = document.getElementById('teacherEmail');
     this.studentCount = document.getElementById('studentCount');
     this.studentsList = document.getElementById('studentsList');
+    this.assignmentsList = document.getElementById('assignmentsList');
+    this.btnCreateAssignment = document.getElementById('btnCreateAssignment');
     this.btnDeleteClassroom = document.getElementById('btnDeleteClassroom');
     this.btnBack = document.getElementById('btnBack');
     this.modalDeleteConfirm = document.getElementById('modalDeleteConfirm');
@@ -130,6 +135,13 @@ function attachEventListeners() {
       window.location.href = '/index.html';
     });
   }
+
+  // Create assignment button
+  if (DOM.btnCreateAssignment) {
+    DOM.btnCreateAssignment.addEventListener('click', () => {
+      window.location.href = `/assignment.html?classroom=${classroomId}&create=true`;
+    });
+  }
   
   // Delete classroom
   if (DOM.btnDeleteClassroom) {
@@ -166,10 +178,19 @@ async function loadClassroom() {
     DOM.loadingState.style.display = 'block';
     DOM.classroomContent.style.display = 'none';
     
+    console.log('Loading classroom ID:', classroomId);
+    
     const response = await apiCall(`/api/classrooms/${classroomId}`);
     classroom = response.classroom;
+    assignments = response.assignments || [];
     
     console.log('Classroom data:', classroom);
+    console.log('Assignments data:', assignments);
+    console.log('Number of assignments:', assignments.length);
+    
+    if (assignments.length > 0) {
+      console.log('First assignment:', assignments[0]);
+    }
     
     renderClassroom();
     
@@ -218,6 +239,9 @@ function renderClassroom() {
   
   // Render students
   renderStudents();
+
+  // Render assignments
+  renderAssignments();
 }
 
 function renderTeacher() {
@@ -273,6 +297,150 @@ function renderStudents() {
     `;
   }).join('');
 }
+
+function renderAssignments() {
+  console.log('=== renderAssignments called ===');
+  console.log('DOM.assignmentsList exists:', !!DOM.assignmentsList);
+  console.log('assignments array:', assignments);
+  console.log('assignments length:', assignments ? assignments.length : 'null');
+  
+  if (!DOM.assignmentsList) {
+    console.error('assignmentsList element not found!');
+    return;
+  }
+
+  const isTeacher = currentUser && classroom && currentUser.id === classroom.teacher._id.toString();
+  console.log('Is teacher:', isTeacher);
+  
+  // Show create button if user is teacher
+  if (DOM.btnCreateAssignment) {
+    DOM.btnCreateAssignment.style.display = isTeacher ? 'block' : 'none';
+  }
+  
+  if (!assignments || assignments.length === 0) {
+    console.log('No assignments to display');
+    DOM.assignmentsList.innerHTML = '<p class="empty-state">No assignments yet</p>';
+    return;
+  }
+
+  console.log('Rendering', assignments.length, 'assignments');
+
+  DOM.assignmentsList.innerHTML = `
+    <div class="assignments-grid">
+      ${assignments.map(assignment => {
+        const statusInfo = getAssignmentStatus(assignment.dueDate);
+        
+        return `
+          <div class="assignment-card">
+            <div class="assignment-header">
+              <h3>${assignment.title || 'Untitled Assignment'}</h3>
+              <span class="assignment-status ${statusInfo.class}">${statusInfo.text}</span>
+            </div>
+            <p class="assignment-description">${assignment.description || 'No description provided'}</p>
+            <div class="assignment-meta">
+              <span>Due: ${new Date(assignment.dueDate).toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              })}</span>
+              <span>${assignment.totalPoints || 100} points</span>
+            </div>
+            <div class="assignment-actions">
+              ${isTeacher 
+                ? `<a href="/assignment.html?id=${assignment._id}" class="btn-outline">View Details</a>`
+                : `<a href="/assignment.html?id=${assignment._id}" class="btn-primary">View & Submit</a>`
+              }
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+  
+  console.log('Assignments rendered successfully');
+}
+
+function getAssignmentStatus(dueDate) {
+  const now = new Date();
+  const due = new Date(dueDate);
+  const timeDiff = due - now;
+  const hoursDiff = timeDiff / (1000 * 60 * 60);
+  
+  if (timeDiff < 0) {
+    return { class: 'overdue', text: 'Overdue' };
+  } else if (hoursDiff < 24) {
+    return { class: 'due-soon', text: 'Due Soon' };
+  } else {
+    return { class: 'upcoming', text: 'Upcoming' };
+  }
+}
+
+// ===== Bulletin/Announcement Logic =====
+
+async function loadAnnouncements() {
+  const bulletinList = document.getElementById('bulletinList');
+  bulletinList.innerHTML = '<p class="muted">Loading announcements...</p>';
+  try {
+    const res = await apiCall(`/api/announcements/classroom/${classroomId}`);
+    if (res.announcements && res.announcements.length > 0) {
+      bulletinList.innerHTML = res.announcements.map(a => `
+        <div class="announcement-card">
+          <div class="announcement-header">
+            <strong>${a.title}</strong>
+            <span class="announcement-meta">by ${a.createdBy?.firstName || ''} ${a.createdBy?.lastName || a.createdBy?.username || ''} • ${new Date(a.createdAt).toLocaleString()}</span>
+          </div>
+          <div class="announcement-content">${a.content}</div>
+        </div>
+      `).join('');
+    } else {
+      bulletinList.innerHTML = '<p class="muted">No announcements yet.</p>';
+    }
+  } catch (err) {
+    bulletinList.innerHTML = '<p class="muted">Failed to load announcements.</p>';
+  }
+}
+
+function renderAnnouncementForm() {
+  const container = document.getElementById('bulletinCreateFormContainer');
+  if (!container) return;
+  if (currentUser && currentUser.role === 'teacher') {
+    container.innerHTML = `
+      <form id="announcementForm" class="announcement-form">
+        <input type="text" id="announcementTitle" placeholder="Announcement title" required style="margin-bottom:8px;width:100%;padding:8px;">
+        <textarea id="announcementContent" placeholder="Write your announcement..." required style="width:100%;padding:8px;"></textarea>
+        <button type="submit" class="btn btn-primary" style="margin-top:8px;">Post Announcement</button>
+      </form>
+    `;
+    document.getElementById('announcementForm').onsubmit = async function(e) {
+      e.preventDefault();
+      const title = document.getElementById('announcementTitle').value.trim();
+      const content = document.getElementById('announcementContent').value.trim();
+      if (!title || !content) return;
+      try {
+        await apiCall('/api/announcements', 'POST', { title, content, classroom: classroomId });
+        document.getElementById('announcementForm').reset();
+        loadAnnouncements();
+        showToast('Announcement posted!', 'success');
+      } catch (err) {
+        showToast('Failed to post announcement', 'error');
+      }
+    };
+    container.style.display = '';
+  } else {
+    container.innerHTML = '';
+    container.style.display = 'none';
+  }
+}
+
+// Call these after classroom/user is loaded
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    renderAnnouncementForm();
+    loadAnnouncements();
+  }, 800); // Wait for classroomId and currentUser to be set
+});
 
 // ===== Helper Functions =====
 function getFullName(user) {
@@ -344,5 +512,6 @@ async function handleDeleteClassroom() {
 export {
   currentUser,
   classroom,
+  assignments,
   loadClassroom
 };

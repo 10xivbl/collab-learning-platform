@@ -1,6 +1,50 @@
 const Assignment = require('../models/Assignment');
 const Classroom = require('../models/Classroom');
 
+// Helper function to fix Cloudinary URLs for proper downloads
+const fixCloudinaryUrl = (fileUrl) => {
+  if (!fileUrl) return fileUrl;
+  
+  // Pattern to match Cloudinary URLs
+  const cloudinaryPattern = /https:\/\/res\.cloudinary\.com\/([^\/]+)\/(raw|image)\/upload\/(.+)/;
+  const match = fileUrl.match(cloudinaryPattern);
+  
+  if (match) {
+    const cloudName = match[1];
+    const resourceType = match[2];
+    const pathAfterUpload = match[3];
+    
+    // Only check for PDF files specifically by extension
+    const isPdf = pathAfterUpload.toLowerCase().includes('.pdf');
+    
+    // Only convert to raw if it's actually a PDF uploaded as image
+    const correctResourceType = (isPdf && resourceType === 'image') ? 'raw' : resourceType;
+    
+    // Remove any existing flags
+    const cleanPath = pathAfterUpload.replace(/^fl_attachment[^\/]*\//, '');
+    
+    // For PDFs, add attachment flag. For images, just ensure clean URL
+    if (isPdf) {
+      return `https://res.cloudinary.com/${cloudName}/${correctResourceType}/upload/fl_attachment/${cleanPath}`;
+    } else {
+      // For images, return clean URL without attachment flag so they can be viewed
+      return `https://res.cloudinary.com/${cloudName}/${correctResourceType}/upload/${cleanPath}`;
+    }
+  }
+  
+  return fileUrl;
+};
+
+// Helper function to fix attachments array
+const fixAttachments = (attachments) => {
+  if (!attachments || !Array.isArray(attachments)) return attachments;
+  
+  return attachments.map(att => ({
+    ...att,
+    fileUrl: fixCloudinaryUrl(att.fileUrl)
+  }));
+};
+
 exports.createAssignment = async (req, res) => {
   try {
     const {
@@ -107,6 +151,7 @@ exports.getClassroomAssignments = async (req, res) => {
 
     const assignments = await Assignment.find(filter)
       .populate('teacher', 'username email firstName lastName')
+      .populate('classroom', 'name classCode')
       .sort('-createdAt');
 
     res.status(200).json({
@@ -159,9 +204,13 @@ exports.getAssignment = async (req, res) => {
       });
     }
 
+    // Fix attachment URLs for proper downloads
+    const assignmentObj = assignment.toObject();
+    assignmentObj.attachments = fixAttachments(assignmentObj.attachments);
+
     res.status(200).json({
       success: true,
-      assignment
+      assignment: assignmentObj
     });
   } catch (error) {
     console.error('Get assignment error:', error);

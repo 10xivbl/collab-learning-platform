@@ -234,10 +234,56 @@
     .btn-secondary:hover {
       background: #e0e0e0;
     }
+
+    /* Fixed profile card in header */
+    .profile-header-fixed {
+      background: #fff;
+      padding: 8px 16px;
+      border-bottom: 1px solid #e0e0e0;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
+
+    .profile-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .profile-card .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .profile-card .avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .profile-card .info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .profile-card .info .name {
+      font-weight: 600;
+      color: #333;
+    }
+
+    .profile-card .info .role {
+      font-size: 12px;
+      color: #666;
+    }
   </style>
 </head>
 <body>
   <div class="page">
+
     <header class="topbar">
       <div class="brand">
         <div class="logo">CL</div>
@@ -246,10 +292,24 @@
           <p class="tagline">Main app</p>
         </div>
       </div>
+      <div class="header-profile-area" id="headerProfileArea">
+        <span id="headerProfileName">Loading...</span>
+        <span id="headerProfileRole" class="role-badge">&nbsp;</span>
+      </div>
       <div class="actions">
         <button class="ghost" id="btnLogout">Sign out</button>
       </div>
     </header>
+
+    <!-- Profile popup (hidden by default) -->
+    <div class="profile-popup" id="profilePopup">
+      <div class="profile-popup-content">
+        <div class="popup-row"><span class="popup-label">Name:</span> <span id="popupProfileName"></span></div>
+        <div class="popup-row"><span class="popup-label">Role:</span> <span id="popupProfileRole"></span></div>
+        <div class="popup-row"><span class="popup-label">Email:</span> <span id="popupProfileEmail"></span></div>
+        <div class="popup-row"><span class="popup-label">User ID:</span> <span id="popupProfileId"></span></div>
+      </div>
+    </div>
 
     <main class="simple-grid">
       <section class="section">
@@ -269,18 +329,6 @@
       <section class="section">
         <div class="section-header">
           <div>
-            <p class="eyebrow">Profile</p>
-            <h2>Your profile</h2>
-          </div>
-        </div>
-        <div class="profile-card" id="profileCard">
-          <p class="muted">Loading profile...</p>
-        </div>
-      </section>
-
-      <section class="section">
-        <div class="section-header">
-          <div>
             <p class="eyebrow">Assignments</p>
             <h2>Recently</h2>
           </div>
@@ -288,6 +336,22 @@
         </div>
         <div id="assignmentList">
           <p class="muted">Loading assignments...</p>
+        </div>
+      </section>
+
+
+
+      <!-- Bulletin/Announcement Section -->
+      <section class="section" id="bulletinSection">
+        <div class="section-header">
+          <div>
+            <p class="eyebrow">Bulletin Board</p>
+            <h2>Class Announcements</h2>
+          </div>
+        </div>
+        <div id="bulletinCreateFormContainer" style="display:none;"></div>
+        <div id="bulletinList">
+          <p class="muted">Loading announcements...</p>
         </div>
       </section>
     </main>
@@ -367,6 +431,11 @@
           <label for="assignmentPoints">Maximum Points *</label>
           <input type="number" id="assignmentPoints" name="assignmentPoints" placeholder="100" min="1" value="100" required>
         </div>
+        <div class="form-group">
+          <label for="assignmentFiles">Attach Materials (Optional)</label>
+          <input type="file" id="assignmentFiles" name="files" multiple accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,.jpg,.jpeg,.png">
+          <small style="color: #666; margin-top: 4px; display: block;">You can select multiple files. Supported formats: PDF, DOC, PPT, XLS, images, etc.</small>
+        </div>
         <div class="modal-actions">
           <button type="button" class="btn btn-cancel">Cancel</button>
           <button type="submit" class="btn btn-primary">Create Assignment</button>
@@ -391,13 +460,6 @@
           <label for="submissionFile">Attach File (Optional)</label>
           <input type="file" id="submissionFile" name="file" accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png">
           <small style="color: #666; margin-top: 4px;">Supported formats: PDF, DOC, DOCX, TXT, JPG, PNG</small>
-        </div>
-        
-        <div class="form-group">
-          <label>
-            <input type="checkbox" id="submissionIsDraft" name="isDraft" style="width: auto; margin-right: 8px;">
-            Save as draft (can edit later)
-          </label>
         </div>
         
         <div class="modal-actions">
