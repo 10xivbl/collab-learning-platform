@@ -21,6 +21,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var loadClassroomsButton: Button
     private lateinit var logoutButton: Button
+    private lateinit var notificationButton: Button
     // Removed announcementButton
     private lateinit var classroomsList: LinearLayout
     private lateinit var progressBar: ProgressBar
@@ -36,6 +37,7 @@ class MainActivity : AppCompatActivity() {
         statusText = findViewById(R.id.statusText)
         loadClassroomsButton = findViewById(R.id.loadClassroomsButton)
         logoutButton = findViewById(R.id.logoutButton)
+        notificationButton = findViewById(R.id.notificationButton)
             // Removed announcementButton initialization
         classroomsList = findViewById(R.id.classroomsList)
         progressBar = findViewById(R.id.progressBar)
@@ -51,6 +53,11 @@ class MainActivity : AppCompatActivity() {
         // Button clicks
         loadClassroomsButton.setOnClickListener { loadClassrooms() }
         logoutButton.setOnClickListener {logout()}
+        notificationButton.setOnClickListener {
+            val intent = Intent(this, NotificationActivity::class.java)
+            intent.putExtra("TOKEN", token)
+            startActivity(intent)
+        }
             // Removed announcementButton click logic
     }
 

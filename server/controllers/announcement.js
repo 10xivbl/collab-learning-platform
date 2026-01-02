@@ -1,5 +1,6 @@
 const Announcement = require('../models/Announcement');
 const Classroom = require('../models/Classroom');
+const { createNotification } = require('./notification');
 
 exports.createAnnouncement = async (req, res) => {
   try {
@@ -8,8 +9,8 @@ exports.createAnnouncement = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing fields' });
     }
     // Only teacher of the class can create
-    const classDoc = await Classroom.findById(classroom);
-    if (!classDoc || classDoc.teacher.toString() !== req.user.id) {
+    const classDoc = await Classroom.findById(classroom).populate('teacher', 'firstName lastName');
+    if (!classDoc || classDoc.teacher._id.toString() !== req.user.id) {
       return res.status(403).json({ success: false, message: 'Not authorized' });
     }
     const announcement = await Announcement.create({
@@ -18,6 +19,37 @@ exports.createAnnouncement = async (req, res) => {
       classroom,
       createdBy: req.user.id
     });
+
+    // Create notifications for all students in the classroom
+    const teacherName = `${classDoc.teacher.firstName} ${classDoc.teacher.lastName}`;
+    const notificationPromises = classDoc.students.map(studentId => 
+      createNotification(
+        studentId,
+        'announcement',
+        `New Announcement in ${classDoc.name}`,
+        `${teacherName} posted: ${title}`,
+        announcement._id,
+        'Announcement',
+        classroom
+      )
+    );
+
+    await Promise.all(notificationPromises);
+
+    // Emit socket event if io is available
+    if (req.app.get('io')) {
+      const io = req.app.get('io');
+      classDoc.students.forEach(studentId => {
+        io.to(studentId.toString()).emit('notification', {
+          type: 'announcement',
+          title: `New Announcement in ${classDoc.name}`,
+          message: `${teacherName} posted: ${title}`,
+          classroomId: classroom,
+          announcementId: announcement._id
+        });
+      });
+    }
+
     res.status(201).json({ success: true, announcement });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

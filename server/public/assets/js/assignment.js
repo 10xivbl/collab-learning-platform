@@ -5,6 +5,7 @@
 
 import { apiCall } from './utils/api.js';
 import { getStorage, clearStorage } from './utils/storage.js';
+import { initNotifications, stopNotificationPolling } from './notifications.js';
 
 // ===== Global State =====
 let currentUser = null;
@@ -98,6 +99,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Attach event listeners
     attachEventListeners();
+    
+    // Initialize notifications
+    initNotifications();
     
     // Load assignment data
     await loadAssignment();
@@ -438,6 +442,7 @@ function showToast(message, type = 'info') {
 }
 
 function logout() {
+  stopNotificationPolling();
   clearStorage();
   window.location.href = '/auth.html';
 }

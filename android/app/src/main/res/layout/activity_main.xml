@@ -23,10 +23,18 @@
             android:textStyle="bold"/>
 
         <Button
+            android:id="@+id/notificationButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:text="noti"
+            android:textSize="12sp"/>
+
+        <Button
             android:id="@+id/logoutButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="LOGOUT"
+            android:text="sign out"
             android:textSize="12sp"/>
     </LinearLayout>
 
@@ -57,7 +65,7 @@
                 android:id="@+id/loadClassroomsButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="LOAD MY CLASSROOMS"
+                android:text="LOAD CLASSROOMS"
                 android:textSize="16sp"
                 android:layout_marginBottom="16dp"/>
 

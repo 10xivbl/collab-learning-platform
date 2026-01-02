@@ -243,3 +243,38 @@ data class GenericResponse(
     val success: Boolean,
     val message: String
 )
+
+// ==================== NOTIFICATION MODELS ====================
+data class Notification(
+    val _id: String,
+    val user: String,
+    val type: String, // "announcement", "assignment", "submission", "grade", "general"
+    val title: String,
+    val message: String,
+    val relatedId: String?,
+    val relatedModel: String?,
+    val classroom: ClassroomInfo?,
+    val isRead: Boolean,
+    val createdAt: String
+)
+
+data class ClassroomInfo(
+    val _id: String,
+    val name: String
+)
+
+data class NotificationsResponse(
+    val success: Boolean,
+    val notifications: List<Notification>,
+    val unreadCount: Int
+)
+
+data class NotificationResponse(
+    val success: Boolean,
+    val notification: Notification
+)
+
+data class UnreadCountResponse(
+    val success: Boolean,
+    val count: Int
+)

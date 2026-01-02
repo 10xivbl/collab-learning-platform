@@ -249,4 +249,41 @@ interface ApiService {
         @Header("Authorization") token: String,
         @Path("id") announcementId: String
     ): Call<GenericResponse>
+
+    // ==================== NOTIFICATION ROUTES ====================
+    
+    // GET /api/notifications
+    @GET("api/notifications")
+    fun getNotifications(
+        @Header("Authorization") token: String,
+        @Query("limit") limit: Int = 20,
+        @Query("skip") skip: Int = 0,
+        @Query("unreadOnly") unreadOnly: Boolean = false
+    ): Call<NotificationsResponse>
+    
+    // GET /api/notifications/unread-count
+    @GET("api/notifications/unread-count")
+    fun getUnreadCount(
+        @Header("Authorization") token: String
+    ): Call<UnreadCountResponse>
+    
+    // PUT /api/notifications/:notificationId/read
+    @PUT("api/notifications/{notificationId}/read")
+    fun markAsRead(
+        @Header("Authorization") token: String,
+        @Path("notificationId") notificationId: String
+    ): Call<NotificationResponse>
+    
+    // PUT /api/notifications/mark-all-read
+    @PUT("api/notifications/mark-all-read")
+    fun markAllAsRead(
+        @Header("Authorization") token: String
+    ): Call<GenericResponse>
+    
+    // DELETE /api/notifications/:notificationId
+    @DELETE("api/notifications/{notificationId}")
+    fun deleteNotification(
+        @Header("Authorization") token: String,
+        @Path("notificationId") notificationId: String
+    ): Call<GenericResponse>
 }

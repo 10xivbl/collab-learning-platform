@@ -1,5 +1,6 @@
 import { apiCall } from './utils/api.js';
 import { getStorage, setStorage, removeStorage, clearStorage } from './utils/storage.js';
+import { initNotifications, stopNotificationPolling, fetchNotifications } from './notifications.js';
 
 let currentUser = null;
 let classrooms = [];
@@ -118,6 +119,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Setup UI
     setupUI();
     attachEventListeners();
+    
+    // Initialize notifications
+    initNotifications();
     
     // Load initial data
     await loadDashboardData();
@@ -746,6 +750,7 @@ function showToast(message, type = 'info') {
 }
 
 function logout() {
+  stopNotificationPolling();
   clearStorage();
   window.location.href = '/auth.html';
 }

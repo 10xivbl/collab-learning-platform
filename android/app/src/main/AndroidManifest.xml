@@ -37,6 +37,11 @@
             android:name=".ClassroomDetailActivity"
             android:exported="false" />
 
+        <!-- NotificationActivity -->
+        <activity
+            android:name=".NotificationActivity"
+            android:exported="false" />
+
         <!-- RegisterActivity -->
         <activity
             android:name=".ui.RegisterActivity"

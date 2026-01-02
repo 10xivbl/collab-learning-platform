@@ -1,5 +1,6 @@
 const Assignment = require('../models/Assignment');
 const Classroom = require('../models/Classroom');
+const { createNotification } = require('./notification');
 
 // Helper function to fix Cloudinary URLs for proper downloads
 const fixCloudinaryUrl = (fileUrl) => {
@@ -306,7 +307,8 @@ exports.deleteAssignment = async (req, res) => {
 
 exports.publishAssignment = async (req, res) => {
   try {
-    const assignment = await Assignment.findById(req.params.id);
+    const assignment = await Assignment.findById(req.params.id)
+      .populate('classroom');
 
     if (!assignment) {
       return res.status(404).json({
@@ -326,6 +328,42 @@ exports.publishAssignment = async (req, res) => {
     assignment.status = 'published';
     assignment.publishedAt = new Date();
     await assignment.save();
+
+    // Get classroom with students
+    const classroom = await Classroom.findById(assignment.classroom._id)
+      .populate('teacher', 'firstName lastName');
+
+    // Create notifications for all students in the classroom
+    if (classroom && classroom.students && classroom.students.length > 0) {
+      const teacherName = `${classroom.teacher.firstName} ${classroom.teacher.lastName}`;
+      const notificationPromises = classroom.students.map(studentId => 
+        createNotification(
+          studentId,
+          'assignment',
+          `New Assignment: ${assignment.title}`,
+          `${teacherName} posted a new assignment in ${classroom.name}. Due: ${new Date(assignment.dueDate).toLocaleDateString()}`,
+          assignment._id,
+          'Assignment',
+          classroom._id
+        )
+      );
+
+      await Promise.all(notificationPromises);
+
+      // Emit socket event if io is available
+      if (req.app.get('io')) {
+        const io = req.app.get('io');
+        classroom.students.forEach(studentId => {
+          io.to(studentId.toString()).emit('notification', {
+            type: 'assignment',
+            title: `New Assignment: ${assignment.title}`,
+            message: `${teacherName} posted a new assignment in ${classroom.name}`,
+            classroomId: classroom._id,
+            assignmentId: assignment._id
+          });
+        });
+      }
+    }
 
     res.status(200).json({
       success: true,

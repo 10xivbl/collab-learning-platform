@@ -1,6 +1,8 @@
 const Submission = require('../models/Submission');
 const Assignment = require('../models/Assignment');
 const Classroom = require('../models/Classroom');
+const { createNotification } = require('./notification');
+const User = require('../models/User');
 
 // Helper function to fix Cloudinary URLs for proper downloads
 const fixCloudinaryUrl = (fileUrl) => {
@@ -147,6 +149,35 @@ exports.createSubmission = async (req, res) => {
       { path: 'student', select: 'username email firstName lastName' }
     ]);
 
+    // Create notification for the teacher if submission is not a draft
+    if (submission.status === 'submitted') {
+      const student = await User.findById(req.user.id).select('firstName lastName');
+      const studentName = `${student.firstName} ${student.lastName}`;
+      
+      await createNotification(
+        assignmentDoc.teacher,
+        'submission',
+        `New Submission: ${assignmentDoc.title}`,
+        `${studentName} submitted their work for "${assignmentDoc.title}"`,
+        submission._id,
+        'Submission',
+        assignmentDoc.classroom
+      );
+
+      // Emit socket event if io is available
+      if (req.app.get('io')) {
+        const io = req.app.get('io');
+        io.to(assignmentDoc.teacher.toString()).emit('notification', {
+          type: 'submission',
+          title: `New Submission: ${assignmentDoc.title}`,
+          message: `${studentName} submitted their work`,
+          classroomId: assignmentDoc.classroom,
+          submissionId: submission._id,
+          assignmentId: assignment
+        });
+      }
+    }
+
     res.status(201).json({
       success: true,
       message: 'Submission created successfully',
@@ -206,6 +237,8 @@ exports.updateSubmission = async (req, res) => {
     }
 
     // Update submission fields
+    const previousStatus = submission.status;
+    
     if (content !== undefined) {
       submission.content = content;
     }
@@ -228,6 +261,35 @@ exports.updateSubmission = async (req, res) => {
       { path: 'assignment', select: 'title dueDate totalPoints' },
       { path: 'student', select: 'username email firstName lastName' }
     ]);
+
+    // Notify teacher if status changed from draft to submitted
+    if (previousStatus === 'draft' && submission.status === 'submitted') {
+      const student = await User.findById(req.user.id).select('firstName lastName');
+      const studentName = `${student.firstName} ${student.lastName}`;
+      
+      await createNotification(
+        assignmentDoc.teacher,
+        'submission',
+        `New Submission: ${assignmentDoc.title}`,
+        `${studentName} submitted their work for "${assignmentDoc.title}"`,
+        submission._id,
+        'Submission',
+        assignmentDoc.classroom
+      );
+
+      // Emit socket event if io is available
+      if (req.app.get('io')) {
+        const io = req.app.get('io');
+        io.to(assignmentDoc.teacher.toString()).emit('notification', {
+          type: 'submission',
+          title: `New Submission: ${assignmentDoc.title}`,
+          message: `${studentName} submitted their work`,
+          classroomId: assignmentDoc.classroom,
+          submissionId: submission._id,
+          assignmentId: submission.assignment
+        });
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -346,7 +408,8 @@ exports.gradeSubmission = async (req, res) => {
     const { grade, feedback } = req.body;
 
     const submission = await Submission.findById(req.params.id)
-      .populate('assignment');
+      .populate('assignment')
+      .populate('student', 'firstName lastName');
 
     if (!submission) {
       return res.status(404).json({
@@ -386,6 +449,32 @@ exports.gradeSubmission = async (req, res) => {
       { path: 'assignment', select: 'title totalPoints' },
       { path: 'gradedBy', select: 'username firstName lastName' }
     ]);
+
+    // Create notification for the student
+    const teacher = await User.findById(req.user.id).select('firstName lastName');
+    const teacherName = `${teacher.firstName} ${teacher.lastName}`;
+    
+    await createNotification(
+      submission.student._id,
+      'grade',
+      `Assignment Graded: ${submission.assignment.title}`,
+      `${teacherName} graded your submission. Score: ${grade}/${submission.assignment.totalPoints}`,
+      submission._id,
+      'Submission',
+      submission.classroom
+    );
+
+    // Emit socket event if io is available
+    if (req.app.get('io')) {
+      const io = req.app.get('io');
+      io.to(submission.student._id.toString()).emit('notification', {
+        type: 'grade',
+        title: `Assignment Graded: ${submission.assignment.title}`,
+        message: `You received ${grade}/${submission.assignment.totalPoints}`,
+        classroomId: submission.classroom,
+        submissionId: submission._id
+      });
+    }
 
     res.status(200).json({
       success: true,

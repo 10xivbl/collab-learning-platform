@@ -4,8 +4,35 @@ const path = require('path');
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const http = require('http');
+const { Server } = require('socket.io');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST']
+  }
+});
+
+// Make io accessible to routes
+app.set('io', io);
+
+// Socket.io connection handling
+io.on('connection', (socket) => {
+  console.log('User connected:', socket.id);
+
+  // Join user to their own room for targeted notifications
+  socket.on('authenticate', (userId) => {
+    socket.join(userId);
+    console.log(`User ${userId} authenticated and joined room`);
+  });
+
+  socket.on('disconnect', () => {
+    console.log('User disconnected:', socket.id);
+  });
+});
 
 // midleware
 app.use(cors());
@@ -54,6 +81,7 @@ app.use('/api/assignments', require('./routes/assignment'));
 app.use('/api/submissions', require('./routes/submission'));
 app.use('/api/upload', require('./routes/upload'));
 app.use('/api/announcements', require('./routes/announcement'));
+app.use('/api/notifications', require('./routes/notification'));
 
 // error handling middleware
 app.use((err, req, res, next) => {
@@ -67,7 +95,7 @@ app.use((err, req, res, next) => {
 
 // start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`server is running on port ${PORT}`);
     console.log(`environment: ${process.env.NODE_ENV || 'development'}`);
 });
